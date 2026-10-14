@@ -1,0 +1,1052 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Bengkel Prompt Game Edu</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lilita+One&display=swap">
+<style>
+/* Layout: kiri = tiga langkah isian (pilih game, bahan ajar, aturan game); kanan = konsol prompt yang menempel saat menggulir.
+   Warna: biru tinta kelas, emas sebagai penanda aksi, tiap game punya warna sendiri (--g). */
+:root{
+  --bg:#F1F3FA; --surface:#FFFFFF; --surface2:#E6EAF6; --fg:#121B38; --muted:#4D5985; --line:#D2D8EC;
+  --accent:#F2A900; --accent-ink:#1A1400; --focus:#2D6BFF; --ok:#17814A;
+  --console:#0D1530; --console-fg:#E6EAFF; --console-muted:#93A0CF; --console-line:#27335F; --hole:#FFC21A; --head:#9FB8FF;
+  --f-display:'Lilita One','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1026; --surface:#131C3F; --surface2:#1C2753; --fg:#EAEEFF; --muted:#9AA6D6; --line:#2A3869;
+    --accent:#FFC21A; --accent-ink:#1A1400; --focus:#7FA2FF; --ok:#4CCB8A;
+    --console:#060B1D; --console-line:#222E58; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1026; --surface:#131C3F; --surface2:#1C2753; --fg:#EAEEFF; --muted:#9AA6D6; --line:#2A3869;
+  --accent:#FFC21A; --accent-ink:#1A1400; --focus:#7FA2FF; --ok:#4CCB8A;
+  --console:#060B1D; --console-line:#222E58; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:22px 96px}
+.wrap{max-width:1320px;margin:0 auto}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{display:flex;flex-direction:column;gap:6px;padding-bottom:20px;max-width:760px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,5vw,46px);line-height:1.05;text-wrap:balance}
+.lede{color:var(--muted);max-width:62ch}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width:1040px){.grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px}}
+.left{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.step-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.step-n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:var(--f-display);font-size:16px}
+.step-h h2{font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.15}
+.step-h .spacer{flex:1}
+.step-sub{color:var(--muted);font-size:14px;margin-top:-6px;max-width:68ch}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.gcard{--g:#2E9E4F;text-align:left;cursor:pointer;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.gcard:hover{border-color:var(--g)}
+.gcard[aria-checked="true"]{border-color:var(--g);background:color-mix(in srgb,var(--g) 13%,var(--surface))}
+.gico{width:42px;height:42px;border-radius:10px;background:var(--g);display:grid;place-items:center}
+.gico svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.gname{font-weight:700;line-height:1.2}
+.gshort{font-size:12.5px;color:var(--muted);line-height:1.35}
+.gnote{--g:#2E9E4F;border-left:4px solid var(--g);background:color-mix(in srgb,var(--g) 10%,var(--surface));padding:10px 14px;border-radius:0 10px 10px 0;font-size:14px}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px 16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field>label,.field>legend,.field>.lab{font-weight:600;font-size:13.5px}
+.hint{font-size:12.5px;color:var(--muted)}
+.ph{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500;margin-left:6px}
+input[type=text],input[type=number],select,textarea{width:100%;min-width:0;background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:9px 11px}
+textarea{resize:vertical;min-height:64px}
+input:focus,select:focus,textarea:focus{border-color:var(--focus)}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip span{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13.5px;line-height:1.3}
+.chip input:checked+span{background:color-mix(in srgb,var(--accent) 26%,var(--surface));border-color:var(--accent)}
+.chip input:checked+span::before{content:"\2713";font-weight:700}
+.chip input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.sub-h{grid-column:1/-1;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.sub-h:first-child{border-top:0;padding-top:0;margin-top:0}
+
+.btn{cursor:pointer;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 13px;font-weight:600;font-size:13.5px}
+.btn:hover{border-color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);padding:9px 18px;font-size:14.5px}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+
+.right{min-width:0}
+.console{background:var(--console);color:var(--console-fg);border-radius:16px;border:1px solid var(--console-line);display:flex;flex-direction:column;overflow:hidden}
+@media (min-width:1040px){
+  .right{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px)}
+  .console{max-height:calc(100vh - 28px)}
+  .mbar{display:none!important}
+}
+.c-head{display:flex;flex-direction:column;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--console-line)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{cursor:pointer;border:0;background:transparent;color:var(--console-muted);padding:7px 12px;border-radius:8px;font-weight:600;font-size:13.5px}
+.tab[aria-selected="true"]{background:var(--console-line);color:var(--console-fg)}
+.c-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.c-meta{flex:1;min-width:150px;font-size:12.5px;color:var(--console-muted)}
+.c-meta b{color:var(--console-fg);font-weight:600}
+.c-miss{font-size:12px;color:var(--hole);font-family:var(--f-mono);overflow-wrap:anywhere}
+.c-extra{display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--console-line)}
+.c-extra .field{flex:1;min-width:150px}
+.c-extra label{color:var(--console-muted);font-size:12.5px}
+.c-extra input,.c-extra select{background:#0A1129;border-color:var(--console-line);color:var(--console-fg)}
+pre#out{margin:0;padding:16px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:12.5px;line-height:1.65;flex:1;min-height:260px;max-height:62vh;tab-size:2}
+@media (min-width:1040px){pre#out{max-height:none}}
+pre#out .hd{color:var(--head);font-weight:500}
+pre#out mark{background:color-mix(in srgb,var(--hole) 22%,transparent);color:var(--hole);border-radius:4px;padding:0 2px}
+
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+.mbar .c-meta{color:var(--muted);min-width:0}
+.mbar .c-meta b{color:var(--fg)}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:calc(100% - 32px);text-align:center}
+#toast.on{opacity:1}
+@media (min-width:1040px){#toast{bottom:28px}}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+.foot{margin-top:28px;color:var(--muted);font-size:13px;max-width:80ch}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Untuk guru dan pembuat konten ajar</p>
+    <h1>Bengkel Prompt Game Edu</h1>
+    <p class="lede">Pilih permainan, isi bahan ajar satu kali, lalu salin master prompt untuk Claude, Gemini, atau ChatGPT. Hasilnya adalah game kelas yang bisa langsung dimainkan dan menilai jawaban siswa.</p>
+  </header>
+
+  <main class="grid">
+    <div class="left">
+      <section class="step" aria-labelledby="h-game">
+        <div class="step-h"><span class="step-n">1</span><h2 id="h-game">Pilih permainan</h2></div>
+        <div class="cards" id="cards" role="radiogroup" aria-labelledby="h-game"></div>
+        <p class="gnote" id="gnote"></p>
+      </section>
+
+      <section class="step" aria-labelledby="h-bahan">
+        <div class="step-h">
+          <span class="step-n">2</span><h2 id="h-bahan">Isi bahan pembelajaran</h2><span class="spacer"></span>
+          <button class="btn" type="button" id="btn-example">Isi contoh</button>
+          <button class="btn" type="button" id="btn-clear">Kosongkan</button>
+        </div>
+        <p class="step-sub">Kolom yang dikosongkan tetap tampil sebagai penanda berwarna emas di prompt. AI diminta memakai asumsi wajar dan menyebutkannya.</p>
+        <div class="fields" id="f-common"></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-atur">
+        <div class="step-h"><span class="step-n">3</span><h2 id="h-atur">Atur permainan <span id="atur-name"></span></h2><span class="spacer"></span><button class="btn" type="button" id="btn-reset">Setel ulang aturan</button></div>
+        <div class="fields" id="f-game"></div>
+      </section>
+
+      <p class="foot">Semua teks prompt dibuat di browser ini. Isian tersimpan di perangkat Anda saja. Nama permainan mengikuti format acara dan game populer, tetapi prompt meminta nama, visual, dan suara yang orisinal agar tidak memakai logo atau aset resmi.</p>
+    </div>
+
+    <aside class="right" aria-label="Hasil prompt">
+      <div class="console">
+        <div class="c-head">
+          <div class="tabs" role="tablist" aria-label="Jenis prompt">
+            <button class="tab" role="tab" id="tab-prompt" aria-selected="true" aria-controls="out" data-tab="prompt" type="button">Master prompt game</button>
+            <button class="tab" role="tab" id="tab-info" aria-selected="false" aria-controls="out" data-tab="info" type="button">Prompt infografis panduan</button>
+          </div>
+          <div class="c-bar">
+            <div class="c-meta"><span id="meta"></span></div>
+            <button class="btn primary" type="button" id="btn-copy">Salin prompt</button>
+          </div>
+          <div class="c-miss" id="miss" hidden></div>
+        </div>
+        <div class="c-extra" id="extra" hidden>
+          <div class="field"><label for="i-ratio">Ukuran infografis</label>
+            <select id="i-ratio"><option>3:4 (poster vertikal)</option><option>9:16 (layar ponsel)</option><option>16:9 (slide proyektor)</option></select></div>
+          <div class="field"><label for="i-foot">Teks kredit di bagian bawah</label>
+            <input id="i-foot" type="text" placeholder="mis. Panduan Kelas Belajar Guru"></div>
+        </div>
+        <pre id="out" tabindex="0" aria-live="off"></pre>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="mbar">
+  <div class="c-meta"><span id="meta2"></span></div>
+  <button class="btn primary" type="button" id="btn-copy2">Salin prompt</button>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<datalist id="dl-gaya">
+  <option value="Kartun cerah dan ceria untuk kelas">
+  <option value="Petualangan fantasi dengan warna hangat">
+  <option value="Sains futuristik dengan aksen neon lembut">
+  <option value="Pixel art retro">
+  <option value="Minimalis bersih dengan kontras tinggi">
+  <option value="Mengikuti tema materi secara otomatis">
+</datalist>
+
+<script id="data">
+/* ===== DATA DAN PENYUSUN PROMPT (fungsi murni, tanpa DOM) ===== */
+const L = (...a) => a.join('\n');
+const LIST = a => a.map(x => '* ' + x).join('\n');
+const NUM = a => a.map((x, i) => (i + 1) + '. ' + x).join('\n');
+
+const BENTUK = ['Pilihan ganda (4 opsi, 1 benar)', 'Benar/Salah', 'Isian singkat', 'Menjodohkan', 'Mengurutkan', 'Uraian singkat'];
+const KESULITAN = ['Mudah', 'Sedang', 'Sulit', 'Campuran (naik bertahap)'];
+const JENJANG = ['PAUD/TK', 'SD/MI', 'SMP/MTs', 'SMA/SMK/MA', 'Perguruan tinggi', 'Pelatihan / umum'];
+const FITUR = ['Efek suara sederhana (Web Audio, tanpa berkas luar)', 'Rekor lokal (localStorage)', 'Acak urutan soal dan opsi', 'Timer per soal', 'Papan peringkat sesi', 'Panel kontrol guru', 'Mode layar penuh untuk proyektor', 'Kontras tinggi dan navigasi keyboard'];
+const PLATFORM = ['Claude Artifacts', 'Gemini Canvas', 'ChatGPT Canvas', 'Canva AI', 'Google AI Studio', 'browser biasa (satu file HTML mandiri)'];
+
+const COMMON = [
+  { id: 'judul', label: 'Judul game', ph: 'JUDUL_GAME', type: 'text', placeholder: 'mis. Petualangan Siklus Air', wide: true },
+  { id: 'jenjang', label: 'Jenjang pendidikan', ph: 'JENJANG', type: 'select', opts: JENJANG, def: 'SD/MI' },
+  { id: 'kelas', label: 'Kelas / Fase', ph: 'KELAS_FASE', type: 'text', placeholder: 'mis. Kelas 5 / Fase C' },
+  { id: 'mapel', label: 'Mata pelajaran', ph: 'MATA_PELAJARAN', type: 'text', placeholder: 'mis. IPAS' },
+  { id: 'materi', label: 'Materi / topik', ph: 'MATERI', type: 'text', placeholder: 'mis. Siklus air dan perubahan wujud zat' },
+  { id: 'tujuan', label: 'Tujuan pembelajaran', ph: 'TUJUAN_PEMBELAJARAN', type: 'textarea', wide: true, placeholder: 'Salin dari modul ajar Anda. Prompt melarang AI mengarang capaian resmi.' },
+  { id: 'indikator', label: 'Indikator ketercapaian', ph: 'INDIKATOR', type: 'textarea', wide: true, placeholder: 'Satu indikator per baris', hint: 'Satu indikator per baris. Soal akan dipetakan ke indikator ini.' },
+  { id: 'konteks', label: 'Konteks kehidupan nyata', ph: 'KONTEKS', type: 'text', wide: true, placeholder: 'mis. hujan, genangan yang mengering, embun pagi' },
+  { id: 'kesulitan', label: 'Tingkat kesulitan', ph: 'TINGKAT_KESULITAN', type: 'select', opts: KESULITAN, def: 'Campuran (naik bertahap)' },
+  { id: 'gaya', label: 'Gaya visual', ph: 'GAYA_VISUAL', type: 'text', list: 'dl-gaya', placeholder: 'Pilih saran atau ketik sendiri', def: 'Kartun cerah dan ceria untuk kelas' },
+  { id: 'fitur', label: 'Fitur tambahan', ph: 'FITUR_TAMBAHAN', type: 'checks', opts: FITUR, def: ['Efek suara sederhana (Web Audio, tanpa berkas luar)', 'Rekor lokal (localStorage)', 'Acak urutan soal dan opsi'], wide: true },
+  { id: 'platform', label: 'Platform pengembangan', ph: 'PLATFORM', type: 'select', opts: PLATFORM, def: 'Claude Artifacts' },
+];
+
+const EXAMPLE = {
+  judul: 'Petualangan Siklus Air', jenjang: 'SD/MI', kelas: 'Kelas 5 / Fase C', mapel: 'IPAS',
+  materi: 'Siklus air dan perubahan wujud zat',
+  tujuan: 'Peserta didik dapat menjelaskan tahapan siklus air dan mengaitkannya dengan perubahan wujud zat.',
+  indikator: 'Menyebutkan tahapan siklus air\nMenjelaskan penguapan, pengembunan, dan pengendapan\nMenghubungkan siklus air dengan peristiwa sehari-hari',
+  konteks: 'hujan, genangan yang mengering, embun di pagi hari',
+  gaya: 'Kartun cerah bertema alam dan air',
+};
+
+/* Kolom dasar yang dipakai semua game */
+const soalF = (n, mode, modeDef, bentukDef, jumlahLabel) => [
+  { id: 'jumlahSoal', group: 'dasar', label: jumlahLabel || 'Jumlah soal di bank soal', ph: 'JUMLAH_SOAL', type: 'number', min: 5, max: 200, def: String(n) },
+  { id: 'mode', group: 'dasar', label: 'Mode permainan', ph: 'MODE_PERMAINAN', type: 'checks', opts: mode, def: modeDef, wide: true },
+  ...(bentukDef ? [{ id: 'bentuk', group: 'dasar', label: 'Bentuk soal', ph: 'JENIS_SOAL', type: 'checks', opts: BENTUK, def: bentukDef, wide: true }] : []),
+];
+const nilaiF = (d) => [
+  { id: 'poinBenar', group: 'nilai', label: 'Jawaban benar', ph: 'POIN_BENAR', type: 'text', def: d.poinBenar },
+  { id: 'salah', group: 'nilai', label: 'Jawaban salah', ph: 'KONSEKUENSI_SALAH', type: 'text', def: d.salah },
+  { id: 'beruntun', group: 'nilai', label: 'Bonus beruntun', ph: 'BONUS_BERUNTUN', type: 'text', def: d.beruntun },
+  { id: 'finis', group: 'nilai', label: 'Bonus menyelesaikan permainan', ph: 'BONUS_FINIS', type: 'text', def: d.finis },
+  { id: 'khusus', group: 'nilai', label: d.khususLabel || 'Aturan petak atau item khusus', ph: 'ATURAN_PETAK_KHUSUS', type: 'textarea', wide: true, def: d.khusus },
+];
+const A = (id, label, type, def, extra) => Object.assign({ id, group: 'aturan', label, type, def }, extra || {});
+
+const ICON = {
+  ular: '<path d="M12 40V10M22 40V10M12 17h10M12 26h10M12 35h10"/><path d="M36 8c-8 0-8 8 0 8s8 8 0 8-8 8 0 14"/>',
+  ttt: '<path d="M18 8v32M30 8v32M8 18h32M8 30h32"/><path d="M10 10l6 6M16 10l-6 6"/><circle cx="35" cy="35" r="3.5"/>',
+  mill: '<path d="M7 41h9v-8h8v-8h8v-8h9"/><path d="M40 3l5 5-5 5-5-5z"/>',
+  bounce: '<path d="M5 41h38"/><circle cx="24" cy="24" r="8"/><path d="M8 30c4-12 8-16 14-16"/>',
+  tts: '<rect x="8" y="8" width="32" height="32" rx="3"/><path d="M8 18h32M8 28h32M18 8v32M28 8v32"/>',
+  mystery: '<rect x="8" y="22" width="32" height="18" rx="2"/><rect x="6" y="15" width="36" height="8" rx="2"/><path d="M24 15v25M24 15c-4-8-12-6-10-1M24 15c4-8 12-6 10-1"/>',
+  family: '<rect x="5" y="10" width="38" height="28" rx="4"/><path d="M13 20h9M13 28h9M30 20l6 8M36 20l-6 8"/>',
+};
+
+const GAMES = {
+/* ---------------------------------------------------------------- ULAR TANGGA */
+ular: {
+  name: 'Ular Tangga', title: 'Ular Tangga', color: '#2E9E4F', icon: ICON.ular,
+  short: 'Papan 10 × 10 dengan ular, tangga, dan petak kuis',
+  note: 'Dasar dari master prompt acuan Anda. Cocok untuk 1–4 pemain atau kelompok yang bergiliran, dengan soal muncul di petak kuis, ular, dan tangga.',
+  essence: 'Pemain melempar dadu, menggerakkan pion, dan menjawab soal untuk naik tangga, menghindari ular, atau meraih poin tambahan.',
+  fields: [
+    ...soalF(30, ['Individu melawan komputer', '2–4 pemain bergiliran', 'Kelompok bergiliran'], ['2–4 pemain bergiliran'], ['Pilihan ganda (4 opsi, 1 benar)']),
+    A('ular', 'Jumlah ular', 'number', '6', { min: 2, max: 10 }),
+    A('tangga', 'Jumlah tangga', 'number', '6', { min: 2, max: 10 }),
+    A('kuis', 'Petak kuis biasa', 'text', 'sekitar 20 petak, tersebar acak tetapi tetap sama selama satu sesi'),
+    A('finisRule', 'Aturan mencapai petak 100', 'select', 'Harus tepat: jika dadu melebihi sisa langkah, pion tidak bergerak', { opts: ['Harus tepat: jika dadu melebihi sisa langkah, pion tidak bergerak', 'Memantul: kelebihan langkah menggerakkan pion mundur dari petak 100', 'Boleh lebih: pion langsung finis'], wide: true }),
+    ...nilaiF({
+      poinBenar: '+10 poin untuk setiap jawaban benar',
+      salah: 'Tidak ada pengurangan poin, tetapi pion tidak naik dan pemain mendapat petunjuk',
+      beruntun: '+5 poin untuk setiap 3 jawaban benar berturut-turut',
+      finis: '+50 poin untuk pemain pertama yang mencapai petak 100',
+      khususLabel: 'Aturan petak khusus',
+      khusus: 'Petak tangga: benar naik, salah tetap. Petak ular: benar selamat, salah turun ke ekor. Petak bintang (3 petak): kuis bonus +20 poin.',
+    }),
+  ],
+  display: ['Skor setiap pemain.', 'Posisi pion.', 'Jumlah soal yang dikerjakan.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Bonus yang diperoleh.', 'Status giliran.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN PAPAN ULAR TANGGA', '',
+    'Buat papan permainan standar 10 × 10 dengan 100 petak bernomor 1–100.', '',
+    'Ketentuan:', '',
+    LIST([
+      'Susun nomor dengan pola zigzag: baris paling bawah dari kiri ke kanan (1–10), baris di atasnya dari kanan ke kiri (11–20), dan seterusnya.',
+      'Petak 1 adalah titik mulai dan petak 100 adalah titik finis.',
+      'Tambahkan ' + g.ular + ' ular, ' + g.tangga + ' tangga, pion pemain, dan petak kuis (' + g.kuis + ').',
+      'Gunakan ilustrasi ular, tangga, dan dekorasi petak yang sesuai dengan tema ' + V('materi', 'MATERI') + '.',
+      'Buat satu fungsi tunggal numberToCell(n) dan cellCenter(n). Fungsi ini dipakai untuk menggambar petak, pion, ular, dan tangga, sehingga posisi visual selalu sama dengan posisi logis dalam kode.',
+      'Gambar ular dan tangga sebagai lapisan SVG yang koordinatnya dihitung dari cellCenter(), bukan ditempatkan dengan angka manual.',
+      'Gunakan warna yang menarik dan kontras. Sediakan legenda dan petunjuk bermain.',
+    ]), '',
+    'Aturan konfigurasi ular dan tangga:', '',
+    LIST([
+      'Tangga hanya menuju petak lebih tinggi dan ular hanya menuju petak lebih rendah.',
+      'Tidak ada ular atau tangga yang berawal di petak 1 atau 100.',
+      'Satu petak hanya boleh menjadi awal atau akhir dari satu ular atau tangga. Tujuan sebuah ular atau tangga tidak boleh menjadi awal ular atau tangga lain, agar tidak terjadi rantai perpindahan.',
+      'Simpan konfigurasi dalam objek tetap, misalnya const TANGGA = {awal: akhir} dan const ULAR = {kepala: ekor}. Validasi seluruh aturan di atas saat permainan dimulai dan tampilkan pesan kesalahan yang jelas bila ada yang dilanggar.',
+    ]), '',
+    'Gunakan konfigurasi ular dan tangga yang konsisten selama satu sesi permainan. Pastikan setiap titik awal dan akhir sesuai dengan nomor petak yang digambar.'),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Pemain memilih mode, mengisi nama, dan memulai permainan.',
+      'Pemain melempar dadu (animasi singkat, hasil 1–6 dari generator acak) untuk menentukan jumlah langkah.',
+      'Pion bergerak petak demi petak sesuai hasil dadu.',
+      'Sistem mendeteksi jenis petak tempat pion berhenti: biasa, kuis, tangga, ular, atau bintang.',
+      'Jika petak merupakan petak kuis, ular, tangga, atau petak khusus, tampilkan pertanyaan yang relevan.',
+      'Jawaban pemain diperiksa berdasarkan kunci jawaban.',
+      'Tampilkan umpan balik, pembahasan, dan konsekuensi permainan.',
+      'Jawaban benar dan salah memengaruhi skor atau pergerakan sesuai aturan yang telah ditentukan.',
+      'Setelah proses selesai, giliran berikutnya dimulai.',
+      'Pemain memenangkan permainan setelah mencapai petak 100.',
+      'Aturan mencapai petak 100: ' + g.finisRule + '.',
+      'Cegah klik ganda, jawaban berulang, dan perhitungan skor ganda dengan mengunci tombol selama animasi dan pemeriksaan jawaban.',
+    ]), '',
+    'Aturan khusus:', '',
+    LIST(['Petak tangga: jawaban benar membuat pemain naik tangga.', 'Petak ular: jawaban benar memungkinkan pemain menghindari turun.', 'Petak kuis biasa: jawaban benar memperoleh poin tambahan.', 'Petak khusus lainnya mengikuti konfigurasi permainan.'])),
+  qNote: () => 'Setiap petak kuis, ular, dan tangga mengambil satu soal dari bank soal. Soal yang sudah tampil tidak boleh muncul lagi sebelum seluruh bank soal terpakai.',
+  qFields: [],
+  screens: () => ['Halaman pembuka.', 'Formulir pengaturan permainan (nama pemain, mode).', 'Papan ular tangga.', 'Panel pemain dan status giliran.', 'Tombol lempar dadu.', 'Modal pertanyaan interaktif.', 'Panel skor dan progres.', 'Petunjuk bermain.'],
+  tests: ['Petak 10 dan 11 berada tepat bersebelahan secara vertikal, dan setiap nomor petak digambar di lokasi yang sama dengan posisi logis pion.', 'Semua ular dan tangga lolos validasi konfigurasi.', 'Aturan mencapai petak 100 bekerja untuk angka dadu yang pas dan yang berlebih.', 'Pergantian giliran benar untuk 1–4 pemain.'],
+  tech: ['Papan dibuat dengan CSS grid 10 × 10 dan lapisan SVG di atasnya.'],
+  steps: [['Pilih mode dan pemain', 'Pilih jumlah pemain atau kelompok lalu isi nama.'], ['Lempar dadu', 'Tekan tombol dadu untuk mendapat angka 1–6.'], ['Pion berjalan', 'Pion bergerak sebanyak angka dadu.'], ['Cek jenis petak', 'Petak biasa, kuis, tangga, ular, atau bintang.'], ['Jawab soal', 'Pilih jawaban sebelum waktu habis.'], ['Tangga atau ular', 'Benar: naik tangga atau selamat dari ular. Salah: tetap atau turun.'], ['Giliran berikutnya', 'Skor dicatat lalu giliran berpindah.'], ['Finis di 100', 'Pemain harus mendapat angka yang tepat.'], ['Lihat hasil belajar', 'Skor, ketepatan, dan rekomendasi latihan.']],
+  badges: ['1–4 pemain', 'Papan 10 × 10', 'Soal di petak kuis'],
+  rules: ['Setiap jawaban hanya dinilai satu kali.', 'Finis harus tepat di petak 100.', 'Ular dan tangga sama selama satu sesi.'],
+  tips: ['Proyeksikan papan ke layar kelas.', 'Bahas jawaban salah bersama-sama.', 'Putar giliran agar semua siswa terlibat.'],
+},
+
+/* ---------------------------------------------------------------- TIC TAC TOE */
+ttt: {
+  name: 'Tic Tac Toe', title: 'Tic Tac Toe', color: '#7A5CFF', icon: ICON.ttt,
+  short: 'Rebut petak dengan jawaban benar, susun tiga berurutan',
+  note: 'Cepat dimainkan dan cocok untuk penutup pelajaran. Tanda X atau O hanya dipasang bila soal di petak itu dijawab benar.',
+  essence: 'Dua pemain atau tim memilih petak, menjawab soal, dan hanya jawaban benar yang menempatkan tanda hingga ada barisan berurutan.',
+  fields: [
+    ...soalF(24, ['2 pemain bergiliran', '2 tim', 'Lawan komputer'], ['2 tim'], ['Pilihan ganda (4 opsi, 1 benar)', 'Benar/Salah']),
+    A('ukuran', 'Ukuran papan', 'select', '3 × 3 (3 tanda berurutan menang)', { opts: ['3 × 3 (3 tanda berurutan menang)', '4 × 4 (4 tanda berurutan menang)', '5 × 5 (4 tanda berurutan menang)'] }),
+    A('ronde', 'Jumlah ronde', 'select', 'Terbaik dari 3 ronde', { opts: ['Satu ronde', 'Terbaik dari 3 ronde', 'Terbaik dari 5 ronde'] }),
+    A('aturanSalah', 'Jika jawaban salah', 'select', 'Petak tetap kosong dan giliran pindah ke lawan', { opts: ['Petak tetap kosong dan giliran pindah ke lawan', 'Petak terkunci satu giliran dan giliran pindah', 'Lawan boleh merebut petak itu dengan soal baru'], wide: true }),
+    A('timer', 'Batas waktu menjawab', 'select', '30 detik', { opts: ['Tanpa batas', '20 detik', '30 detik', '45 detik'] }),
+    A('petakBonus', 'Petak bernilai khusus', 'text', 'Petak tengah dan keempat sudut bernilai 2× poin', { wide: true }),
+    ...nilaiF({
+      poinBenar: '+10 poin untuk setiap jawaban benar',
+      salah: 'Tidak ada tanda dan tidak ada pengurangan poin; giliran mengikuti aturan jawaban salah',
+      beruntun: '+5 poin jika tim menjawab benar 3 kali berturut-turut',
+      finis: '+30 poin untuk pemenang ronde dan +10 poin untuk masing-masing tim bila seri',
+      khususLabel: 'Aturan petak bernilai khusus',
+      khusus: 'Petak bernilai khusus memberi 2× poin bila dijawab benar. Soal pada petak ini diambil dari tingkat lebih sulit.',
+    }),
+  ],
+  display: ['Skor setiap pemain atau tim.', 'Papan dengan tanda X dan O.', 'Jumlah soal yang dikerjakan.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Skor ronde dan status giliran.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN PAPAN TIC TAC TOE', '',
+    'Buat papan permainan ukuran ' + g.ukuran + '.', '',
+    'Ketentuan:', '',
+    LIST([
+      'Setiap petak adalah tombol besar yang dapat dipilih dengan klik, sentuh, atau keyboard.',
+      'Tanda pemain atau tim pertama dan kedua dapat diganti dengan ikon bertema ' + V('materi', 'MATERI') + ' (mis. dua simbol yang mewakili konsep dalam materi), tetapi selalu mudah dibedakan oleh warna dan bentuk.',
+      'Petak bernilai khusus: ' + g.petakBonus + '. Beri penanda visual yang jelas dan tambahkan di legenda.',
+      'Deteksi kemenangan dengan satu fungsi yang memeriksa baris, kolom, dan kedua diagonal, termasuk barisan sepanjang jumlah tanda yang disyaratkan pada papan besar.',
+      'Deteksi seri bila seluruh petak terisi tanpa pemenang. Sorot garis kemenangan dengan animasi singkat.',
+      'Tampilkan papan skor ronde: ' + g.ronde + '.',
+    ])),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Pemain atau tim memilih mode, mengisi nama, dan memulai permainan. Pemain pertama ditentukan secara acak atau bergantian antarronde.',
+      'Pemain yang mendapat giliran memilih satu petak kosong.',
+      'Modal soal tampil. Waktu menjawab: ' + g.timer + '.',
+      'Jawaban diperiksa berdasarkan kunci jawaban.',
+      'Jika benar, tanda pemain dipasang pada petak dan poin dicatat.',
+      'Jika salah: ' + g.aturanSalah + '. Tampilkan pembahasan singkat.',
+      'Sistem memeriksa kemenangan dan seri setiap kali tanda dipasang.',
+      'Giliran berpindah ke lawan.',
+      'Ronde berakhir bila ada pemenang atau seri. Skor ronde diperbarui dan papan direset untuk ronde berikutnya.',
+      'Pemenang akhir ditentukan sesuai format: ' + g.ronde + '.',
+      'Cegah klik ganda pada petak, jawaban berulang, dan perhitungan skor ganda.',
+    ]), '',
+    'Jika mode Lawan komputer dipilih: komputer memilih petak dengan strategi sederhana (menang bila bisa, memblokir lawan bila perlu, selain itu acak). Komputer "menjawab" benar dengan peluang tetap yang disebutkan jelas kepada pemain (mis. 60%), dan hasil jawabannya ditampilkan bersama pembahasan.'),
+  qNote: (c, g) => 'Siapkan soal agar setiap petak mendapat soal berbeda dalam satu ronde. Untuk petak bernilai khusus gunakan soal dengan tingkat lebih tinggi. Bank soal minimal dua kali jumlah petak agar ronde berikutnya tidak berulang.',
+  qFields: [],
+  screens: () => ['Halaman pembuka.', 'Formulir pengaturan permainan (nama tim, mode, ukuran papan, ronde).', 'Papan Tic Tac Toe.', 'Panel tim dan status giliran.', 'Modal pertanyaan interaktif dengan timer.', 'Panel skor dan skor ronde.', 'Petunjuk bermain.'],
+  tests: ['Seluruh 8 pola kemenangan pada papan 3 × 3 terdeteksi, termasuk dua diagonal.', 'Seri terdeteksi tepat saat petak terakhir terisi tanpa pemenang.', 'Petak yang sudah terisi tidak dapat dipilih lagi.', 'Aturan jawaban salah berjalan sesuai pilihan.', 'Papan dan skor ronde pulih benar setelah ronde diulang.'],
+  tech: ['Papan disimpan sebagai array dua dimensi dan dirender ulang dari state.'],
+  steps: [['Pilih mode dan ukuran papan', 'Tentukan tim, ukuran papan, dan jumlah ronde.'], ['Pilih petak', 'Tim yang mendapat giliran memilih petak kosong.'], ['Jawab soal', 'Soal muncul dengan batas waktu.'], ['Benar: tanda terpasang', 'Tanda X atau O muncul di petak itu.'], ['Salah: ikuti aturan', 'Petak tetap kosong dan giliran pindah.'], ['Susun barisan', 'Tiga tanda berurutan secara mendatar, menurun, atau diagonal menang.'], ['Ronde berikutnya', 'Papan direset dan skor dilanjutkan.'], ['Pemenang akhir', 'Tim dengan ronde terbanyak menjuarai.']],
+  badges: ['2 tim', 'Papan 3 × 3', 'Terbaik dari 3'],
+  rules: ['Tanda hanya dipasang bila jawaban benar.', 'Satu petak hanya bisa diisi satu kali.', 'Seri dihitung bila papan penuh.'],
+  tips: ['Cocok untuk 10 menit terakhir pelajaran.', 'Minta tim berdiskusi sebelum menjawab.', 'Gunakan ukuran 4 × 4 untuk kelas lanjut.'],
+},
+
+/* ---------------------------------------------------------------- MILLIONAIRE */
+mill: {
+  name: 'Millionaire Edu', title: 'Kuis Bertingkat Millionaire', color: '#2D6BFF', icon: ICON.mill,
+  short: '15 pertanyaan naik tingkat, tiga bantuan, titik aman',
+  note: 'Format kuis bertingkat dengan tangga hadiah. Hadiah berupa poin pembelajaran, bukan uang. Cocok untuk kelompok 2–8 dan kompetisi kelas.',
+  essence: 'Pemain atau kelompok menjawab pertanyaan yang makin sulit, memakai bantuan dengan bijak, dan menaiki tangga poin hingga puncak.',
+  fields: [
+    ...soalF(45, ['Individu', 'Kelompok', 'Kompetisi kelas'], ['Kelompok'], null, 'Jumlah soal di bank soal (minimal 3 per tingkat)'),
+    A('tingkat', 'Jumlah tingkat tangga', 'number', '15', { min: 5, max: 20 }),
+    A('kelompok', 'Jumlah kelompok', 'number', '4', { min: 1, max: 8 }),
+    A('timer', 'Batas waktu per soal', 'select', '45 detik', { opts: ['Tanpa batas', '30 detik', '45 detik', '60 detik'] }),
+    A('aman', 'Titik aman (nomor tingkat)', 'text', '5 dan 10'),
+    A('tangga', 'Nilai tiap tingkat (poin)', 'text', '100; 200; 300; 500; 1.000; 2.000; 4.000; 8.000; 16.000; 32.000; 64.000; 125.000; 250.000; 500.000; 1.000.000', { wide: true, hint: 'Hadiah memakai poin pembelajaran. Ubah nilainya bila jumlah tingkat berbeda.' }),
+    A('bantuan', 'Bantuan yang tersedia', 'checks', ['50:50 (menghapus dua opsi salah)', 'Tanya Penonton (suara kelas)', 'Telepon Teman (saran teman)'], { opts: ['50:50 (menghapus dua opsi salah)', 'Tanya Penonton (suara kelas)', 'Telepon Teman (saran teman)'], wide: true }),
+    ...nilaiF({
+      poinBenar: 'Naik satu tingkat tangga dan mendapat poin tingkat tersebut',
+      salah: 'Permainan berhenti dan skor kembali ke titik aman terakhir (0 bila belum melewati titik aman)',
+      beruntun: '+500 poin bila mencapai tingkat 10 tanpa memakai bantuan sama sekali',
+      finis: 'Gelar Juara Tangga Poin dan +1.000 poin bagi yang menjawab tingkat teratas dengan benar',
+      khususLabel: 'Aturan bantuan dan tombol berhenti',
+      khusus: 'Setiap bantuan hanya sekali pakai per kelompok. Tombol "Berhenti dan Ambil Poin" mengunci poin tingkat saat ini. Pemakaian bantuan tidak mengurangi poin.',
+    }),
+  ],
+  fixedFormat: 'Pilihan ganda 4 opsi (A–D) dengan satu jawaban benar',
+  display: ['Skor atau tingkat setiap kelompok.', 'Tangga hadiah dengan penanda tingkat saat ini dan titik aman.', 'Bantuan yang masih tersedia.', 'Jumlah soal yang dikerjakan.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Status giliran kelompok.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN TAMPILAN KUIS BERTINGKAT', '',
+    'Buat tampilan permainan satu layar yang cocok untuk proyektor kelas.', '',
+    LIST([
+      'Area soal di tengah: nomor soal (mis. "Pertanyaan 5 / ' + g.tingkat + '"), teks pertanyaan, dan empat tombol opsi A–D berukuran besar dengan warna berbeda.',
+      'Panel tangga hadiah di sisi kanan dengan ' + g.tingkat + ' tingkat: ' + g.tangga + '. Tingkat saat ini disorot dan titik aman (' + g.aman + ') diberi penanda khusus.',
+      'Baris bantuan di atas area soal: ' + (g.bantuan.length ? g.bantuan.join(', ') : 'tidak ada bantuan') + '. Bantuan yang sudah dipakai berubah abu-abu dan tidak dapat diklik.',
+      'Timer melingkar atau batang (' + g.timer + ') dan informasi kelompok yang sedang bermain.',
+      'Tombol "Berhenti dan Ambil Poin" selalu terlihat tetapi memerlukan konfirmasi di dalam halaman (jangan memakai dialog bawaan browser).',
+      'Opsi yang dipilih dikunci terlebih dahulu, lalu jawaban benar diungkap dengan jeda singkat dan animasi.',
+      'Nama, visual, dan suara dibuat orisinal. Jangan meniru logo, musik, atau nama dagang acara televisi mana pun.',
+      'Tema ilustrasi mengikuti ' + V('materi', 'MATERI') + '.',
+    ])),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Guru memilih mode: Individu, Kelompok (' + g.kelompok + ' kelompok bermain bergiliran), atau Kompetisi kelas (semua kelompok menjawab soal yang sama dan kelompok yang salah gugur).',
+      'Soal ditampilkan sesuai tingkat tangga. Tingkat 1 sampai ' + g.tingkat + ' naik bertahap dari mudah ke sulit.',
+      'Pemain memilih satu opsi, lalu sistem mengunci pilihan dan menampilkan jawaban benar.',
+      'Jawaban benar menaikkan tingkat dan menambah poin. Pembahasan singkat tampil sebelum soal berikutnya.',
+      'Jawaban salah mengakhiri giliran kelompok: ' + g.salah + '.',
+      'Bantuan 50:50 menyembunyikan dua opsi salah yang dipilih acak. Tanya Penonton menampilkan diagram suara simulasi yang condong ke jawaban benar pada soal mudah dan kurang akurat pada soal sulit. Telepon Teman menampilkan saran teman virtual dengan tingkat keyakinan yang menurun pada soal sulit dan boleh keliru. Jelaskan di layar bahwa ketiganya adalah simulasi.',
+      'Pada mode Kelompok, bila waktu habis jawaban dianggap salah.',
+      'Permainan berakhir bila kelompok salah menjawab, memilih berhenti, atau menyelesaikan tingkat teratas.',
+      'Pemenang ditentukan dari poin tertinggi. Bila seri, tampilkan soal penentu.',
+      'Cegah klik ganda, jawaban berulang, pemakaian bantuan lebih dari sekali, dan perhitungan skor ganda.',
+    ])),
+  qNote: (c, g) => 'Susun soal berurutan menurut tingkat: tingkat 1–5 mudah, 6–10 sedang, 11–' + g.tingkat + ' sulit. Setiap tingkat harus memiliki minimal tiga soal alternatif agar tiap kelompok mendapat soal berbeda. Distraktor harus masuk akal sehingga bantuan 50:50 tetap bermakna.',
+  qFields: ['Nomor tingkat tangga yang dituju.'],
+  screens: () => ['Halaman pembuka.', 'Formulir pengaturan permainan (mode, jumlah kelompok, nama kelompok).', 'Layar utama soal dengan tangga hadiah.', 'Panel kelompok dan status giliran.', 'Modal bantuan (suara kelas dan telepon teman).', 'Panel skor dan progres.', 'Petunjuk bermain.'],
+  tests: ['Urutan tingkat soal naik dari mudah ke sulit.', 'Setiap bantuan hanya bisa dipakai sekali per kelompok.', '50:50 selalu menyisakan jawaban benar dan satu opsi salah.', 'Skor kembali ke titik aman yang benar saat jawaban salah.', 'Mode Kelompok berpindah giliran dengan benar.'],
+  tech: ['Opsi jawaban diacak tanpa mengubah kunci jawaban.'],
+  steps: [['Persiapan sebelum bermain', 'Siapkan layar proyektor dan bagi kelas menjadi kelompok.'], ['Pilih mode', 'Individu, kelompok, atau kompetisi kelas.'], ['Soal ditampilkan', 'Baca soal dan empat pilihan A sampai D.'], ['Kunci jawaban', 'Pilih satu opsi lalu tunggu pengungkapan.'], ['Gunakan bantuan', '50:50, tanya penonton, atau telepon teman.'], ['Naik tangga poin', 'Setiap jawaban benar menaikkan satu tingkat.'], ['Titik aman', 'Skor aman jika salah setelah titik aman.'], ['Tentukan juara', 'Poin tertinggi menjadi pemenang.']],
+  badges: ['2–8 kelompok', '15 pertanyaan', '3 bantuan'],
+  rules: ['Setiap bantuan hanya sekali pakai.', 'Jawaban dikunci sebelum diungkap.', 'Salah setelah titik aman tidak menghapus poin aman.'],
+  tips: ['Beri waktu diskusi kelompok.', 'Bahas pilihan salah yang menarik.', 'Gunakan layar proyektor besar.'],
+},
+
+/* ---------------------------------------------------------------- BOUNCE EDU */
+bounce: {
+  name: 'Bounce Edu', title: 'Bounce Edu (Petualangan Bola Memantul)', color: '#E5432F', icon: ICON.bounce,
+  short: 'Platformer bola memantul, kumpulkan ring soal, buka pintu keluar',
+  note: 'Permainan aksi ringan berbasis Canvas. Siswa menggerakkan bola, mengumpulkan ring soal, menjawab, dan membuka pintu keluar tiap level.',
+  essence: 'Pemain menggerakkan bola memantul melewati labirin berlevel, mengumpulkan ring soal, menjawab pertanyaan, menghindari bahaya, dan membuka pintu keluar.',
+  fields: [
+    ...soalF(24, ['Individu', 'Tim (bergiliran per level)', 'Battle (dua pemain bergiliran di satu perangkat)'], ['Individu'], ['Pilihan ganda (4 opsi, 1 benar)', 'Benar/Salah']),
+    A('level', 'Jumlah level', 'number', '5', { min: 2, max: 10 }),
+    A('nyawa', 'Nyawa awal', 'number', '3', { min: 1, max: 9 }),
+    A('ringPerLevel', 'Ring soal per level', 'number', '4', { min: 2, max: 8 }),
+    A('kontrol', 'Kontrol', 'select', 'Keyboard (panah dan spasi) ditambah tombol layar sentuh', { opts: ['Keyboard (panah dan spasi) ditambah tombol layar sentuh', 'Hanya keyboard', 'Hanya tombol layar sentuh'], wide: true }),
+    A('powerup', 'Item bonus', 'checks', ['Kristal biru (+100)', 'Kristal emas (+250)', 'Nyawa tambahan', 'Perisai', 'Percepatan', 'Magnet', 'Pengali poin ×2'], { opts: ['Kristal biru (+100)', 'Kristal emas (+250)', 'Nyawa tambahan', 'Perisai', 'Percepatan', 'Magnet', 'Pengali poin ×2'], wide: true }),
+    A('bahaya', 'Bahaya', 'checks', ['Duri (−1 nyawa)', 'Jurang (kembali ke checkpoint)', 'Lava (−1 nyawa)'], { opts: ['Duri (−1 nyawa)', 'Jurang (kembali ke checkpoint)', 'Lava (−1 nyawa)'], wide: true }),
+    ...nilaiF({
+      poinBenar: '+200 poin dan ring soal terhitung',
+      salah: 'Tidak ada poin dan ring tidak terhitung; ring aktif kembali setelah 3 detik dengan soal berbeda',
+      beruntun: '+100 poin untuk setiap 3 jawaban benar berturut-turut',
+      finis: '+300 poin per level selesai dan +500 poin untuk level terakhir',
+      khususLabel: 'Aturan item dan bahaya',
+      khusus: 'Perisai menahan satu bahaya. Pengali ×2 berlaku 15 detik. Magnet menarik kristal di sekitar bola selama 10 detik. Kehabisan nyawa mengulang level dari checkpoint terakhir.',
+    }),
+  ],
+  display: ['Skor dan nyawa pemain.', 'Ring soal terkumpul per level (mis. 2/4).', 'Kristal dan item aktif.', 'Level saat ini dan waktu.', 'Jumlah soal yang dikerjakan.', 'Jawaban benar dan salah.', 'Persentase ketepatan.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN DUNIA DAN LEVEL', '',
+    'Buat permainan platformer 2D dengan HTML5 Canvas dan loop requestAnimationFrame.', '',
+    LIST([
+      'Bola pemain bergerak kiri dan kanan, melompat, dan memantul secara realistis. Gunakan gravitasi, kecepatan maksimum, dan tabrakan dengan blok yang sederhana tetapi stabil (waktu langkah tetap agar kecepatan sama di semua perangkat).',
+      'Definisikan ' + g.level + ' level sebagai peta ubin berupa array teks (satu karakter per ubin: blok, ring soal, kristal, duri, jurang, lava, checkpoint, pintu keluar). Jangan membuat level secara acak.',
+      'Setiap level memiliki ' + g.ringPerLevel + ' ring soal. Pintu keluar terkunci sampai semua ring soal terkumpul dan jawabannya sudah diproses.',
+      'Beri nama dan latar tiap level yang mengikuti tema ' + V('materi', 'MATERI') + '.',
+      'Item bonus: ' + (g.powerup.length ? g.powerup.join(', ') : 'tidak ada') + '.',
+      'Bahaya: ' + (g.bahaya.length ? g.bahaya.join(', ') : 'tidak ada') + '. Beri jeda kebal singkat setelah terkena bahaya agar tidak kehilangan beberapa nyawa sekaligus.',
+      'Kamera mengikuti bola. Gambar semua objek dengan bentuk Canvas atau SVG bawaan, tanpa berkas gambar luar.',
+      'Kontrol: ' + g.kontrol + '. Tombol layar sentuh berukuran minimal 56 px.',
+      'HUD menampilkan nyawa, ring soal terkumpul (mis. 2/' + g.ringPerLevel + '), kristal, skor, level, dan waktu.',
+    ])),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Pemain memilih mode, mengisi nama, dan memulai Level 1.',
+      'Pemain menggerakkan bola dan mengumpulkan kristal serta item.',
+      'Saat bola menyentuh ring soal, permainan dijeda dan modal soal tampil. Gerakan bola berhenti sampai soal selesai.',
+      'Jawaban diperiksa berdasarkan kunci jawaban, lalu pembahasan tampil.',
+      'Jawaban benar: ' + g.poinBenar + '. Jawaban salah: ' + g.salah + '.',
+      'Bahaya mengurangi nyawa atau memindahkan bola ke checkpoint sesuai jenisnya. Nyawa habis berarti level diulang.',
+      'Setelah semua ring soal terkumpul, pintu keluar terbuka. Menyentuhnya menyelesaikan level dan menampilkan ringkasan level.',
+      'Pada mode Tim, anggota tim bergantian memainkan tiap level. Pada mode Battle, dua pemain memainkan level yang sama secara bergiliran dan skor dibandingkan.',
+      'Permainan selesai setelah level terakhir. Tampilkan layar "Level Complete" dan hasil akhir.',
+      'Cegah satu ring soal diproses dua kali, jawaban berulang, dan skor ganda.',
+    ])),
+  qNote: () => 'Soal tampil dalam modal singkat yang dapat dijawab kurang dari 30 detik. Hindari soal yang butuh membaca teks panjang. Setiap level memakai kumpulan soal yang berbeda dan makin sulit.',
+  qFields: ['Nomor level tempat soal dipakai.'],
+  screens: () => ['Halaman pembuka dengan pilihan mode.', 'Formulir pengaturan permainan (nama pemain atau tim).', 'Layar permainan Canvas dengan HUD.', 'Modal pertanyaan dari ring soal.', 'Layar jeda dan tombol kontrol layar sentuh.', 'Layar ringkasan level.', 'Petunjuk bermain dan daftar item.'],
+  tests: ['Bola tidak menembus blok atau jatuh melewati lantai pada kecepatan tinggi.', 'Permainan benar-benar berhenti selama modal soal tampil.', 'Satu ring soal hanya memicu satu soal dan satu penilaian.', 'Pintu keluar hanya terbuka setelah semua ring soal selesai.', 'Kontrol sentuh dan keyboard berfungsi dan loop game tidak ganda setelah pengulangan level.'],
+  tech: ['Gunakan Canvas 2D, satu objek state, dan loop dengan waktu langkah tetap.', 'Efek suara memakai Web Audio sederhana dan hanya dimulai setelah interaksi pengguna.'],
+  steps: [['Pilih mode permainan', 'Individu, tim, atau battle.'], ['Mulai level', 'Tekan Start lalu gerakkan bola.'], ['Jelajahi labirin', 'Kumpulkan ring, kristal, dan checkpoint.'], ['Temukan ring soal', 'Sentuh ring untuk membuka pertanyaan.'], ['Jawab soal', 'Pilih jawaban pada modal soal.'], ['Hasil jawaban', 'Benar menambah poin dan ring. Salah tidak menambah.'], ['Fitur dan bonus', 'Kristal, perisai, magnet, dan pengali poin.'], ['Hindari bahaya', 'Duri, jurang, dan lava mengurangi nyawa.'], ['Buka pintu keluar', 'Kumpulkan semua ring soal untuk membuka pintu.'], ['Level selanjutnya', 'Semakin tinggi level semakin menantang.'], ['Kontrol', 'Kiri, kanan, lompat, jeda, dan ulang.'], ['Level selesai', 'Lihat skor dan lanjut.']],
+  badges: ['Individu / Tim / Battle', 'Ring soal', '5 level'],
+  rules: ['Pintu keluar terkunci sampai ring soal habis.', 'Soal menjeda permainan.', 'Nyawa habis mengulang level.'],
+  tips: ['Mulai dari level 1 untuk latihan kontrol.', 'Siapkan layar sentuh atau keyboard.', 'Gunakan mode tim untuk kelas besar.'],
+},
+
+/* ---------------------------------------------------------------- TTS */
+tts: {
+  name: 'TTS Edu', title: 'TTS Edu (Teka-Teki Silang Bertingkat)', color: '#009C9C', icon: ICON.tts,
+  short: 'Teka-teki silang berpaket dengan bantuan dan grand finale',
+  note: 'Cocok untuk kosakata, istilah, dan konsep kunci. Prompt memaksa susunan grid ditetapkan di data dan divalidasi, sehingga kotak tidak bertabrakan.',
+  essence: 'Pemain mengisi teka-teki silang berpaket menggunakan petunjuk mendatar dan menurun, dengan bantuan terbatas, timer, dan paket final.',
+  fields: [
+    ...soalF(80, ['Individu', 'Kelompok', 'Battle (dua tim berebut paket)'], ['Individu'], null, 'Jumlah kata di seluruh paket'),
+    A('paket', 'Jumlah paket tantangan', 'number', '10', { min: 2, max: 12 }),
+    A('kata', 'Kata per paket', 'number', '8', { min: 4, max: 15 }),
+    A('grid', 'Ukuran grid per paket', 'select', '11 × 11', { opts: ['9 × 9', '11 × 11', '13 × 13', '15 × 15'] }),
+    A('timer', 'Batas waktu per paket', 'select', '7 menit', { opts: ['Tanpa batas', '5 menit', '7 menit', '10 menit'] }),
+    A('final', 'Paket terakhir', 'select', 'Grand Finale: gabungan kata paling penting dari semua paket', { opts: ['Grand Finale: gabungan kata paling penting dari semua paket', 'Paket biasa'], wide: true }),
+    A('bantuan', 'Bantuan yang tersedia', 'checks', ['Hint Letter (membuka satu huruf)', 'Show Clue (petunjuk tambahan)', 'Clue Word (kata kunci terkait)', 'Reveal Word (membuka satu kata)', 'Check Answer (memeriksa jawaban)'], { opts: ['Hint Letter (membuka satu huruf)', 'Show Clue (petunjuk tambahan)', 'Clue Word (kata kunci terkait)', 'Reveal Word (membuka satu kata)', 'Check Answer (memeriksa jawaban)'], wide: true }),
+    A('fiturKhusus', 'Fitur khusus', 'checks', ['Nyawa ekstra', 'Perisai (menahan satu kesalahan)', 'Waktu tambahan', 'Checkpoint antarpaket', 'Pengali poin ×2'], { opts: ['Nyawa ekstra', 'Perisai (menahan satu kesalahan)', 'Waktu tambahan', 'Checkpoint antarpaket', 'Pengali poin ×2'], wide: true }),
+    ...nilaiF({
+      poinBenar: '+100 poin untuk setiap kata benar',
+      salah: '0 poin, kotak yang salah ditandai merah dan boleh diperbaiki; pemakaian bantuan dikenai pengurangan poin',
+      beruntun: '+50 poin untuk setiap 3 kata benar berturut-turut',
+      finis: 'Bonus sisa waktu per paket dan +200 poin bila paket selesai tanpa bantuan',
+      khususLabel: 'Penalti bantuan dan aturan fitur khusus',
+      khusus: 'Hint Letter −10, Show Clue −15, Clue Word −20, Reveal Word −40, Check Answer −5 poin. Perisai menahan satu penalti. Pengali ×2 berlaku untuk satu paket.',
+    }),
+  ],
+  fixedFormat: 'Teka-teki silang: petunjuk (clue) dijawab dengan satu kata tanpa spasi',
+  display: ['Skor setiap pemain atau tim.', 'Paket yang sedang dikerjakan dan progres kata.', 'Sisa waktu dan bantuan yang dipakai.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Bonus yang diperoleh.', 'Status giliran bila mode Kelompok atau Battle.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN GRID TEKA-TEKI SILANG', '',
+    LIST([
+      'Buat ' + g.paket + ' paket tantangan, masing-masing ' + g.kata + ' kata pada grid ' + g.grid + '. Tentukan tema subtopik tiap paket dari ' + V('materi', 'MATERI') + ' dengan tingkat kesulitan naik bertahap.',
+      'PENTING: tentukan letak setiap kata di dalam data (baris, kolom, arah mendatar atau menurun) secara manual dan deterministik. Jangan menyusun grid secara acak saat aplikasi berjalan.',
+      'Tulis fungsi validateGrid() yang memastikan tidak ada kata keluar dari grid, setiap perpotongan memakai huruf yang sama, dan tidak ada dua kata yang bersentuhan tanpa sengaja. Jalankan saat memuat paket dan laporkan kesalahan ke konsol serta layar pengujian.',
+      'Jawaban hanya huruf A–Z tanpa spasi atau tanda baca. Untuk istilah dengan spasi, gunakan versi satu kata.',
+      'Nomor petunjuk dibuat otomatis dari posisi kata. Daftar petunjuk dibagi menjadi "Mendatar" dan "Menurun" dan menyorot kata yang aktif.',
+      'Papan input: klik kotak untuk memilih, klik lagi untuk berganti arah, panah keyboard untuk berpindah, dan papan huruf di layar untuk perangkat sentuh.',
+      'Kotak yang telah benar dikunci, kotak yang salah ditandai saat Check Answer dipakai.',
+      'Tampilkan peringkat atau papan skor sesi bila fitur itu dipilih.',
+    ]), '',
+    'Bantuan:', '', LIST(g.bantuan.length ? g.bantuan : ['Tidak ada bantuan.']), '',
+    'Fitur khusus: ' + (g.fiturKhusus.length ? g.fiturKhusus.join(', ') : 'tidak ada') + '.'),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Pemain memilih mode, paket tantangan, dan memulai permainan.',
+      'Timer paket berjalan (' + g.timer + ') dan grid beserta daftar petunjuk tampil.',
+      'Pemain mengisi kata. Kata dinilai saat seluruh hurufnya terisi atau saat tombol Cek ditekan.',
+      'Kata benar dikunci dan poin dicatat sekali. Kata salah memunculkan umpan balik tanpa mengunci.',
+      'Pemain boleh memakai bantuan sesuai daftar. Setiap pemakaian dikenai penalti dan dihitung di laporan.',
+      'Paket selesai bila semua kata benar, waktu habis, atau pemain memilih menyerah. Tampilkan ringkasan paket.',
+      'Paket berikutnya terbuka setelah paket sebelumnya selesai. ' + g.final + '.',
+      'Pada mode Kelompok, anggota kelompok bergantian mengisi kata. Pada mode Battle, dua tim mengerjakan paket yang sama dan dibandingkan.',
+      'Pemenang ditentukan dari total skor. Cegah skor ganda untuk kata yang sama, termasuk bila huruf diubah lalu dikembalikan.',
+    ])),
+  qNote: (c, g) => 'Setiap "soal" adalah satu kata jawaban beserta petunjuk. Petunjuk harus jelas dan hanya mengarah ke satu jawaban. Sediakan petunjuk dasar, petunjuk tambahan untuk Show Clue, dan kata kunci terkait untuk Clue Word.',
+  qFields: ['Kata jawaban (A–Z tanpa spasi).', 'Petunjuk tambahan untuk Show Clue.', 'Kata kunci untuk Clue Word.', 'Letak: paket, baris, kolom, arah.'],
+  screens: () => ['Halaman pembuka dengan pilihan mode.', 'Pemilihan paket tantangan.', 'Layar grid teka-teki silang dengan daftar petunjuk.', 'Panel bantuan dan papan huruf di layar.', 'Panel skor, timer, dan progres paket.', 'Layar hasil paket.', 'Petunjuk bermain.'],
+  tests: ['validateGrid() lolos untuk semua paket.', 'Perpotongan kata memakai huruf yang sama dan nomor petunjuk benar.', 'Skor kata hanya dihitung sekali.', 'Setiap bantuan memberi efek yang benar dan penalti yang tepat.', 'Navigasi keyboard dan papan huruf di layar berfungsi.'],
+  tech: ['Data paket disimpan sebagai array objek {kata, petunjuk, baris, kolom, arah}.'],
+  steps: [['Pilih mode permainan', 'Individu, kelompok, atau battle.'], ['Pilih paket tantangan', 'Pilih satu dari sepuluh paket.'], ['Mulai permainan', 'Timer berjalan dan grid tampil.'], ['Tampilan permainan', 'Isi kotak berdasarkan petunjuk mendatar dan menurun.'], ['Gunakan bantuan', 'Hint letter, show clue, clue word, reveal word, check answer.'], ['Jawaban benar atau salah', 'Benar dikunci. Salah ditandai.'], ['Fitur khusus', 'Nyawa ekstra, perisai, dan pengali poin.'], ['Selesai paket', 'Lihat skor dan bonus waktu.'], ['Grand Finale', 'Paket terakhir menggabungkan semua materi.'], ['Panel guru', 'Atur paket dan pantau skor.'], ['Papan peringkat', 'Bandingkan skor semua tim.']],
+  badges: ['3 mode', '10 paket', 'Timer 07:00'],
+  rules: ['Kata hanya dinilai satu kali.', 'Bantuan mengurangi poin.', 'Paket berikutnya terbuka setelah paket selesai.'],
+  tips: ['Cetak daftar petunjuk sebagai cadangan.', 'Gunakan bantuan sebagai bahan diskusi.', 'Mulai dari paket termudah.'],
+},
+
+/* ---------------------------------------------------------------- MYSTERY BOX */
+mystery: {
+  name: 'Mystery Box', title: 'Mystery Box (Kotak Misteri)', color: '#D6317A', icon: ICON.mystery,
+  short: '40 kotak rahasia, pilih kotak, jawab pertanyaan',
+  note: 'Mudah disiapkan guru. Termasuk editor bank soal dan impor atau ekspor CSV. Karena banyak platform memblokir unduhan, ekspor juga ditampilkan sebagai teks yang bisa disalin.',
+  essence: 'Kelompok bergiliran memilih kotak bernomor, menjawab pertanyaan di dalamnya, dan mengumpulkan poin. Kotak yang sudah terbuka tidak dapat dipakai lagi.',
+  fields: [
+    ...soalF(40, ['Individu', 'Kelompok bergiliran', 'Kelas dibagi tim'], ['Kelompok bergiliran'], ['Pilihan ganda (4 opsi, 1 benar)', 'Benar/Salah', 'Isian singkat'], 'Jumlah soal (minimal sama dengan jumlah kotak)'),
+    A('kotak', 'Jumlah kotak', 'number', '40', { min: 12, max: 60 }),
+    A('kelompok', 'Jumlah kelompok', 'number', '3', { min: 1, max: 8 }),
+    A('level', 'Level soal', 'select', 'Guru memilih Mudah, Sedang, atau Sulit sebelum mulai', { opts: ['Guru memilih Mudah, Sedang, atau Sulit sebelum mulai', 'Hanya Mudah', 'Hanya Sedang', 'Hanya Sulit', 'Campuran: kotak mendapat level acak'], wide: true }),
+    A('timer', 'Batas waktu per soal', 'select', '30 detik', { opts: ['Tanpa batas', '20 detik', '30 detik', '45 detik'] }),
+    A('kejutan', 'Kotak kejutan', 'text', '4 kotak: 2 bonus poin, 1 tukar giliran, 1 kotak aman (tanpa soal)', { wide: true }),
+    A('bank', 'Bank soal', 'select', 'Editor bank soal di dalam aplikasi, impor dan ekspor CSV', { opts: ['Editor bank soal di dalam aplikasi, impor dan ekspor CSV', 'Bank soal tetap, tanpa editor'], wide: true }),
+    A('guru', 'Bantuan guru', 'select', 'Tombol Petunjuk Guru dan Lihat Kunci Jawaban tersedia', { opts: ['Tombol Petunjuk Guru dan Lihat Kunci Jawaban tersedia', 'Tidak tersedia'], wide: true }),
+    ...nilaiF({
+      poinBenar: 'Mudah +10, Sedang +20, Sulit +30 poin',
+      salah: '0 poin dan kotak tetap terbuka; kunci jawaban ditampilkan dengan pembahasan',
+      beruntun: '+10 poin untuk setiap 3 jawaban benar berturut-turut',
+      finis: 'Kelompok dengan total poin tertinggi menjadi juara setelah semua kotak terbuka',
+      khususLabel: 'Aturan kotak kejutan',
+      khusus: 'Kotak bonus memberi +25 poin. Kotak tukar giliran memindahkan giliran ke kelompok berikutnya. Kotak aman tidak berisi soal dan tidak mengubah skor.',
+    }),
+  ],
+  display: ['Skor setiap kelompok.', 'Papan kotak (terbuka dan belum).', 'Jumlah soal yang dikerjakan.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Bonus yang diperoleh.', 'Status giliran kelompok.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN PAPAN KOTAK MISTERI', '',
+    LIST([
+      'Tampilkan ' + g.kotak + ' kotak bernomor dalam grid yang rapi dan responsif. Kotak yang sudah terbuka berubah tampilan dan tidak dapat diklik lagi.',
+      'Level soal: ' + g.level + '. Level ditandai dengan bintang atau warna.',
+      'Kotak kejutan: ' + g.kejutan + '. Letaknya diacak sekali saat permainan dimulai dan tetap konsisten sepanjang sesi.',
+      'Animasi membuka kotak singkat dan dapat dimatikan bila pengguna memilih pengurangan gerakan.',
+      'Panel skor kelompok tetap terlihat di samping atau di atas papan.',
+      'Tema dekorasi mengikuti ' + V('materi', 'MATERI') + '.',
+    ]), '',
+    'Bank soal:', '',
+    LIST([
+      g.bank + '.',
+      'Template CSV memiliki kolom: Nomor, Tingkat, Soal, Pilihan A, Pilihan B, Pilihan C, Pilihan D, Kunci, Pembahasan, Petunjuk. Tulis pengurai CSV sendiri yang menangani tanda kutip dan koma di dalam teks.',
+      'Tampilkan pesan kesalahan jelas bila CSV tidak valid (mis. kunci di luar A–D, baris kosong, jumlah kolom salah) dan jangan merusak bank soal yang ada.',
+      'Karena banyak platform memblokir unduhan file, sediakan ekspor sebagai teks CSV dalam kotak teks dengan tombol Salin, selain tombol unduh. Impor dapat dilakukan dengan menempel teks CSV atau memilih file.',
+      'Tidak memakai pustaka luar. Impor .xlsx hanya disediakan bila platform mengizinkan pustaka seperti SheetJS. Bila tidak, jelaskan kepada guru agar menyimpan Excel sebagai CSV.',
+    ])),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Guru memilih level dan mengatur jumlah kelompok (' + g.kelompok + ' kelompok).',
+      'Kelompok yang mendapat giliran memilih satu kotak yang belum terbuka.',
+      'Kotak terbuka: tampilkan soal (' + g.timer + '), pilihan jawaban, dan tombol Petunjuk Guru bila diaktifkan.',
+      'Jawaban diperiksa berdasarkan kunci jawaban.',
+      'Tampilkan umpan balik, pembahasan, dan poin sesuai level soal.',
+      'Kotak kejutan menjalankan efeknya, lalu giliran berpindah.',
+      'Kotak yang telah dibuka tidak dapat dibuka lagi.',
+      'Permainan berakhir setelah semua kotak terbuka atau guru menekan tombol selesai.',
+      'Pemenang ditentukan dari total poin. Bila seri, tampilkan satu soal penentu.',
+      'Cegah klik ganda pada kotak, jawaban berulang, dan perhitungan skor ganda.',
+    ])),
+  qNote: (c, g) => 'Setiap kotak berisi satu soal yang berbeda. Distribusikan soal ke tiga level (Mudah, Sedang, Sulit) secara seimbang bila level campuran dipilih. Sertakan petunjuk guru yang membantu menggiring jawaban tanpa membocorkannya.',
+  qFields: ['Nomor kotak.', 'Petunjuk guru.'],
+  screens: () => ['Halaman pembuka dan pemilihan level.', 'Formulir pengaturan permainan (kelompok, nama).', 'Papan kotak misteri.', 'Modal soal dengan petunjuk dan kunci jawaban untuk guru.', 'Editor bank soal dengan impor dan ekspor CSV.', 'Panel skor kelompok.', 'Petunjuk bermain.'],
+  tests: ['Setiap kotak memuat satu soal valid dan tidak ada soal ganda.', 'Kotak terbuka tidak dapat dibuka lagi.', 'Pengurai CSV menangani tanda kutip, koma di dalam teks, dan baris rusak.', 'Giliran kelompok berputar dengan benar, termasuk setelah kotak tukar giliran.', 'Skor sesuai level soal dan hanya dihitung sekali.'],
+  tech: ['Bank soal disimpan dalam array objek dan dapat diganti guru tanpa mengubah kode.'],
+  steps: [['Pilih level permainan', 'Mudah, sedang, atau sulit.'], ['Kelola bank soal', 'Unduh template lalu unggah soal sendiri.'], ['Tampilan papan permainan', 'Papan menampilkan kotak bernomor.'], ['Pilih salah satu kotak', 'Klik kotak untuk membuka pertanyaan.'], ['Tampilkan pertanyaan', 'Baca soal lalu jawab sebelum waktu habis.'], ['Jawaban benar', 'Kotak terbuka, poin bertambah.'], ['Jawaban salah', 'Tidak ada poin, lanjut ke giliran berikutnya.'], ['Gunakan petunjuk dan kunci', 'Guru dapat membuka petunjuk atau kunci jawaban.'], ['Tentukan pemenang', 'Kelompok dengan poin tertinggi menang.']],
+  badges: ['40 kotak', '3 level', 'Bank soal Excel/CSV'],
+  rules: ['Setiap kotak hanya dibuka satu kali.', 'Jawaban hanya boleh dikirim sekali.', 'Guru dapat membuka petunjuk dan kunci jawaban.'],
+  tips: ['Siapkan bank soal sebelum kelas.', 'Beri nomor kotak agar mudah diikuti.', 'Gunakan level sulit untuk pengayaan.'],
+},
+
+/* ---------------------------------------------------------------- FAMILY 100 */
+family: {
+  name: 'Family 100 Edu', title: 'Family 100 (Survei Konsep Berperingkat)', color: '#F08A00', icon: ICON.family,
+  short: 'Dua tim menebak jawaban berperingkat, tiga kesalahan = giliran berakhir',
+  note: 'Pertanyaan berbentuk "Sebutkan..." dengan beberapa jawaban berperingkat. Peringkat dibuat dari kepentingan konsep, bukan dari hasil survei karangan.',
+  essence: 'Dua tim menebak jawaban pada papan survei. Jawaban benar membuka kotak dan memberi poin, kesalahan ketiga mengakhiri giliran, dan tim lawan dapat merebut poin.',
+  fields: [
+    ...soalF(10, ['2 tim bersaing', 'Kelas dibagi 3–4 tim'], ['2 tim bersaing'], null, 'Jumlah soal survei (ronde)'),
+    A('jawaban', 'Jawaban per soal', 'number', '5', { min: 3, max: 8 }),
+    A('nilaiRank', 'Poin per peringkat', 'text', '100, 80, 60, 40, 20', { hint: 'Urut dari peringkat 1. Jumlah nilai harus sama dengan jumlah jawaban per soal.' }),
+    A('batasX', 'Batas kesalahan per giliran', 'number', '3', { min: 1, max: 5 }),
+    A('rebut', 'Perebutan poin', 'select', 'Setelah kesalahan terakhir, tim lawan mendapat satu kesempatan merebut poin ronde', { opts: ['Setelah kesalahan terakhir, tim lawan mendapat satu kesempatan merebut poin ronde', 'Tanpa perebutan'], wide: true }),
+    A('input', 'Cara memasukkan jawaban', 'select', 'Guru mengetik jawaban tim dan sistem mencocokkan dengan kunci', { opts: ['Guru mengetik jawaban tim dan sistem mencocokkan dengan kunci', 'Tim mengetik sendiri di perangkat'], wide: true }),
+    A('final', 'Ronde terakhir', 'select', 'Poin ronde terakhir bernilai 2×', { opts: ['Poin ronde terakhir bernilai 2×', 'Sama seperti ronde lain'] }),
+    A('timer', 'Batas waktu menjawab', 'select', '20 detik', { opts: ['Tanpa batas', '15 detik', '20 detik', '30 detik'] }),
+    ...nilaiF({
+      poinBenar: 'Poin sesuai peringkat jawaban yang terbuka',
+      salah: 'Satu tanda X untuk tim. Setelah batas X tercapai, giliran berakhir dan jawaban yang belum terbuka dapat direbut lawan',
+      beruntun: '+50 poin bila satu tim membuka semua jawaban pada satu ronde tanpa X',
+      finis: 'Tim dengan skor akhir tertinggi menjadi pemenang',
+      khususLabel: 'Aturan perebutan dan ronde terakhir',
+      khusus: 'Tim yang merebut poin dengan benar mendapat seluruh poin ronde yang terkumpul. Poin ronde terakhir bernilai 2×.',
+    }),
+  ],
+  fixedFormat: 'Soal survei berperingkat: "Sebutkan ..." dengan daftar jawaban dan poin per peringkat',
+  display: ['Skor setiap tim.', 'Papan jawaban dengan kotak terbuka dan tertutup.', 'Jumlah tanda X tiap tim.', 'Jawaban benar dan salah.', 'Persentase ketepatan.', 'Status giliran dan nomor ronde.'],
+  design: (c, g, V) => L(
+    '## D. DESAIN PAPAN SURVEI', '',
+    LIST([
+      'Papan survei berisi ' + g.jawaban + ' kotak jawaban bernomor. Kotak tertutup menampilkan nomor, dan saat terbuka menampilkan teks jawaban dan poin (' + g.nilaiRank + ').',
+      'Skor ronde ditampilkan di tengah dan skor total dua tim di sisi kiri dan kanan. Tanda X besar muncul bila jawaban salah dengan animasi singkat, dengan maksimum ' + g.batasX + ' tanda per giliran.',
+      'Kolom input jawaban: ' + g.input + '.',
+      'Pencocokan jawaban: abaikan huruf besar atau kecil, spasi berlebih, dan tanda baca. Terima sinonim yang terdaftar di data dan toleransi satu huruf salah ketik untuk kata dengan 6 huruf atau lebih. Jawaban yang tidak ada di daftar dianggap salah.',
+      'Soal survei berbentuk "Sebutkan ..." dengan daftar jawaban beserta peringkat dan poin. Bila jawaban ganda diketik berulang, kotak yang sama tidak dibuka dua kali.',
+      'Tampilkan nama tim, ronde (mis. "Soal 3 dari ' + g.jumlahSoal + '"), dan indikator giliran dengan jelas.',
+      'Nama, visual, dan suara dibuat orisinal. Jangan meniru logo, musik, atau nama dagang acara televisi mana pun.',
+    ])),
+  mech: (c, g) => L(
+    '## E. MEKANISME PERMAINAN', '',
+    NUM([
+      'Guru menentukan tim dan perwakilan, lalu memulai ronde pertama.',
+      'Soal survei tampil dengan papan kotak tertutup. Tim yang mendapat giliran menjawab dalam ' + g.timer + '.',
+      'Jawaban dicocokkan dengan kunci. Jika benar, kotak terbuka, poin masuk ke skor ronde, dan tim melanjutkan giliran.',
+      'Jika salah, satu X ditambahkan untuk tim itu.',
+      'Setelah ' + g.batasX + ' X, giliran tim berakhir. ' + g.rebut + '.',
+      'Setelah giliran selesai, semua jawaban yang belum terbuka diungkap, lengkap dengan pembahasan singkat mengapa jawaban itu penting dan mengapa urutannya demikian.',
+      'Skor ronde ditambahkan ke tim pemenang ronde, lalu ronde berikutnya dimulai dengan tim yang bergantian memulai.',
+      'Ronde terakhir: ' + g.final + '.',
+      'Permainan selesai setelah semua ronde. Tim dengan skor tertinggi menang. Bila seri, sediakan soal penentu.',
+      'Cegah satu jawaban dinilai dua kali dan penambahan skor ganda.',
+    ])),
+  qNote: (c, g) => 'Susun soal sebagai pertanyaan "Sebutkan ..." dengan ' + g.jawaban + ' jawaban per soal. Peringkat dan poin harus berdasarkan kepentingan atau keterwakilan konsep dalam materi, bukan hasil survei yang dikarang. Jangan menulis bahwa data berasal dari survei nyata bila bukan. Daftarkan sinonim yang wajar untuk setiap jawaban dan pastikan tidak ada dua jawaban yang bermakna sama.',
+  qFields: ['Daftar jawaban berperingkat beserta poin.', 'Sinonim atau variasi penulisan yang diterima untuk setiap jawaban.'],
+  screens: () => ['Halaman pembuka.', 'Formulir pengaturan tim (nama tim dan perwakilan).', 'Papan survei dengan kotak jawaban.', 'Panel skor tim dan tanda X.', 'Kolom input jawaban untuk guru atau tim.', 'Panel skor ronde dan progres.', 'Petunjuk bermain.'],
+  tests: ['Pencocokan jawaban menerima variasi huruf besar, spasi, dan sinonim yang terdaftar.', 'Jawaban tidak terdaftar selalu menambah X.', 'Giliran berakhir tepat pada batas X dan perebutan poin berjalan benar.', 'Poin ronde pindah ke tim yang benar.', 'Skor ronde terakhir dikalikan sesuai aturan dan permainan bisa diulang dengan state bersih.'],
+  tech: ['Data soal berupa array objek {pertanyaan, jawaban: [{teks, sinonim, poin}]}.'],
+  steps: [['Tentukan tim', 'Bagi kelas menjadi dua tim dan pilih perwakilan.'], ['Tampilan awal game', 'Soal pertama dan kotak jawaban tertutup.'], ['Tim memberi jawaban', 'Guru mengetik jawaban tim.'], ['Jawaban benar', 'Kotak terbuka dan poin masuk.'], ['Jawaban salah', 'Tanda X muncul.'], ['Tiga X', 'Giliran berakhir dan lawan boleh merebut.'], ['Akhir permainan', 'Skor akhir dibandingkan.'], ['Tips untuk guru', 'Siapkan soal dan proyektor.']],
+  badges: ['2 tim', '10 soal', '5 jawaban per soal'],
+  rules: ['Tiga X mengakhiri giliran.', 'Jawaban dicocokkan dengan kunci.', 'Lawan boleh merebut poin ronde.'],
+  tips: ['Siapkan soal sebelum kelas.', 'Beri sinonim agar penilaian adil.', 'Bahas jawaban yang belum terbuka.'],
+},
+};
+
+/* ===== PENYUSUN PROMPT ===== */
+function gameVals(gid, store) {
+  const G = GAMES[gid], out = {};
+  G.fields.forEach(f => {
+    const v = store && store[f.id] !== undefined ? store[f.id] : f.def;
+    out[f.id] = v;
+  });
+  return out;
+}
+function mkV(c) {
+  return (k, ph) => {
+    const v = c[k];
+    if (Array.isArray(v)) return v.length ? v.join(', ') : '[' + ph + ']';
+    return v !== undefined && String(v).trim() ? String(v).trim() : '[' + ph + ']';
+  };
+}
+function distText(k) {
+  if (k === 'Mudah') return 'seluruh soal pada tingkat mudah';
+  if (k === 'Sedang') return 'seluruh soal pada tingkat sedang';
+  if (k === 'Sulit') return 'seluruh soal pada tingkat sulit';
+  return 'sekitar 30% mudah, 50% sedang, dan 20% sulit, disusun naik bertahap sesuai alur permainan';
+}
+
+function buildMaster(c, gid, g, opts) {
+  const G = GAMES[gid], V = mkV(c);
+  const gv = Object.assign({}, g);
+  const arr = x => Array.isArray(x) ? x : (x ? [x] : []);
+  ['bantuan', 'powerup', 'bahaya', 'fiturKhusus', 'mode', 'bentuk'].forEach(k => { if (k in gv) gv[k] = arr(gv[k]); });
+  const ph = (id, p) => { const v = gv[id]; return Array.isArray(v) ? (v.length ? v.join(', ') : '[' + p + ']') : (v !== undefined && String(v).trim() ? String(v).trim() : '[' + p + ']'); };
+  const bentuk = G.fixedFormat ? G.fixedFormat : ph('bentuk', 'JENIS_SOAL');
+  const fitur = (c.fitur && c.fitur.length) ? c.fitur.join(', ') : 'tidak ada fitur tambahan';
+  const ind = (c.indikator || '').split('\n').map(s => s.trim()).filter(Boolean);
+  const indTxt = ind.length ? '\n' + ind.map(s => '  - ' + s).join('\n') : ' [INDIKATOR]';
+  const soalN = ph('jumlahSoal', 'JUMLAH_SOAL');
+
+  const aturanLines = G.fields.filter(f => f.group === 'aturan').map(f => '* ' + f.label + ': ' + ph(f.id, f.ph || f.id.toUpperCase()));
+  const aturanBlock = aturanLines.join('\n');
+
+  const secs = [];
+  secs.push('# MASTER PROMPT GENERATOR GAME EDUKASI ' + G.title.toUpperCase());
+
+  secs.push(L('## A. PERAN AI', '',
+    'Anda adalah ahli pengembangan game edukasi, pemrograman web, desain UI/UX, desain instruksional, gamifikasi, dan asesmen pembelajaran.', '',
+    'Tugas Anda adalah membuat aplikasi game edukasi ' + G.title + ' berbasis web yang interaktif, menyenangkan, responsif, dan sesuai dengan tujuan pembelajaran yang diberikan guru. ' + G.essence, '',
+    'Aplikasi bukan sekadar tampilan visual, tetapi harus memiliki mekanisme permainan yang berfungsi, soal yang relevan, sistem penilaian yang akurat, dan umpan balik pembelajaran.'));
+
+  secs.push(L('## B. KONFIGURASI PEMBELAJARAN', '',
+    'Gunakan konfigurasi berikut sebagai sumber utama untuk membangun konten game.', '',
+    '* Judul game: ' + V('judul', 'JUDUL_GAME'),
+    '* Jenjang pendidikan: ' + V('jenjang', 'JENJANG'),
+    '* Kelas/Fase: ' + V('kelas', 'KELAS_FASE'),
+    '* Mata pelajaran: ' + V('mapel', 'MATA_PELAJARAN'),
+    '* Materi/topik: ' + V('materi', 'MATERI'),
+    '* Tujuan pembelajaran: ' + V('tujuan', 'TUJUAN_PEMBELAJARAN'),
+    '* Indikator ketercapaian:' + indTxt,
+    '* Konteks kehidupan nyata: ' + V('konteks', 'KONTEKS'),
+    '* Jumlah soal: ' + soalN,
+    '* Tingkat kesulitan: ' + V('kesulitan', 'TINGKAT_KESULITAN'),
+    '* Bentuk soal: ' + bentuk,
+    '* Mode permainan: ' + ph('mode', 'MODE_PERMAINAN'),
+    '* Gaya visual: ' + V('gaya', 'GAYA_VISUAL'),
+    '* Fitur tambahan: ' + fitur,
+    '* Platform pengembangan: ' + V('platform', 'PLATFORM'),
+    aturanBlock, '',
+    'Semua pertanyaan, pilihan jawaban, kunci jawaban, pembahasan, tantangan, dan penghargaan harus disesuaikan secara otomatis dengan konfigurasi pembelajaran tersebut.', '',
+    'Jangan menggunakan soal dari mata pelajaran atau materi lain yang tidak relevan.', '',
+    'Jika informasi penting belum diberikan, gunakan asumsi yang wajar dan nyatakan asumsi tersebut. Jangan mengarang standar kurikulum atau capaian resmi.'));
+
+  secs.push(L('## C. SPESIFIKASI TEKNIS', '',
+    'Buat aplikasi menggunakan HTML5, CSS3, dan JavaScript.', '',
+    'Ketentuan teknis:', '',
+    NUM([
+      'Gabungkan seluruh kode dalam satu file HTML.',
+      'Pastikan aplikasi dapat dijalankan langsung di ' + V('platform', 'PLATFORM') + ' tanpa langkah instalasi.',
+      'Jangan hanya membuat desain statis atau mockup.',
+      'Semua tombol, kuis, skor, timer, dan perpindahan giliran harus berfungsi.',
+      'Jangan bergantung pada server, API eksternal, atau database.',
+      'Gunakan localStorage secara opsional untuk menyimpan rekor lokal. Bungkus setiap akses dengan try/catch dan pastikan aplikasi tetap berjalan bila penyimpanan tidak tersedia.',
+      'Pastikan aplikasi responsif pada desktop, tablet, dan smartphone dengan target sentuh minimal 44 px.',
+      'Gunakan kode terstruktur: pisahkan data (bank soal dan konfigurasi) dari logika dan tampilan, simpan status dalam satu objek, gunakan fungsi yang konsisten, dan tangani kesalahan dengan baik.',
+      'Gunakan nama, ilustrasi, dan efek suara yang orisinal. Jangan memakai logo, musik, karakter, atau aset resmi dari acara televisi atau game komersial.',
+      'Jangan memakai alert(), confirm(), atau prompt() bawaan browser. Buat konfirmasi di dalam halaman.',
+      ...G.tech,
+    ])));
+
+  secs.push(G.design(c, gv, V));
+  secs.push(G.mech(c, gv));
+
+  secs.push(L('## F. GENERATOR SOAL OTOMATIS', '',
+    'Buat bank soal sebanyak ' + soalN + ' soal yang seluruhnya sesuai dengan mata pelajaran, materi, jenjang, dan tujuan pembelajaran.', '',
+    'Distribusikan soal ke dalam tingkat ' + V('kesulitan', 'TINGKAT_KESULITAN') + ': ' + distText(c.kesulitan) + '.', '',
+    'Gunakan bentuk soal: ' + bentuk + '.', '',
+    G.qNote(c, gv), '',
+    'Untuk setiap soal, siapkan struktur data yang mencakup:', '',
+    LIST(['ID soal.', 'Materi atau subtopik.', 'Indikator yang diukur.', 'Tingkat kesulitan.', 'Teks pertanyaan.', 'Pilihan jawaban jika diperlukan.', 'Kunci jawaban.', 'Penjelasan jawaban.', 'Poin yang diberikan.', 'Tag kompetensi yang diuji.', ...G.qFields]), '',
+    'Ketentuan pembuatan soal:', '',
+    NUM([
+      'Soal harus akurat dan sesuai dengan tujuan pembelajaran.',
+      'Pastikan setiap soal mempunyai jawaban yang dapat dipertanggungjawabkan.',
+      'Untuk pilihan ganda, gunakan empat opsi dengan satu jawaban benar, kecuali materi memerlukan format lain.',
+      'Acak urutan soal dan opsi jawaban tanpa mengubah kunci.',
+      'Hindari pengulangan berlebihan.',
+      'Gunakan bahasa sesuai jenjang pendidikan.',
+      'Sertakan variasi tingkat kognitif sesuai tujuan pembelajaran.',
+      'Gunakan konteks nyata yang relevan jika memungkinkan.',
+      'Jangan membuat soal yang ambigu atau memiliki beberapa jawaban benar tanpa instruksi yang jelas.',
+      'Jika suatu soal memerlukan gambar, tabel, rumus, audio, atau stimulus, tampilkan stimulus tersebut dengan benar.',
+    ]), '',
+    'Jika bentuk soal memerlukan interaksi khusus, misalnya menyusun urutan, mencocokkan pasangan, atau mengisi jawaban, buat antarmuka yang sesuai. Jangan memaksakan semua bentuk soal menjadi pilihan ganda.'));
+
+  secs.push(L('## G. SISTEM PENILAIAN DAN GAMIFIKASI', '',
+    'Gunakan aturan berikut:', '',
+    LIST([
+      'Jawaban benar: ' + ph('poinBenar', 'POIN_BENAR') + '.',
+      'Jawaban salah: ' + ph('salah', 'KONSEKUENSI_SALAH') + '.',
+      'Bonus beruntun: ' + ph('beruntun', 'BONUS_BERUNTUN') + '.',
+      'Bonus menyelesaikan permainan: ' + ph('finis', 'BONUS_FINIS') + '.',
+      G.fields.find(f => f.id === 'khusus').label + ': ' + ph('khusus', 'ATURAN_PETAK_KHUSUS') + '.',
+    ]), '',
+    'Tampilkan:', '', LIST(G.display), '',
+    'Pastikan skor hanya dihitung sekali untuk setiap soal. Jika belum ada jawaban, persentase ketepatan ditampilkan 0% tanpa pembagian dengan nol.'));
+
+  const screens = G.screens(gv).slice();
+  if (opts.guide) screens.push('Halaman panduan cara bermain di kelas: ' + G.steps.length + ' langkah bernomor (' + G.steps.map(s => s[0]).join('; ') + '), disertai aturan penting dan tips untuk guru. Halaman ini dapat dibuka kapan saja dari menu.');
+  screens.push('Halaman hasil akhir.');
+  secs.push(L('## H. DESAIN ANTARMUKA', '',
+    'Gunakan gaya visual ' + V('gaya', 'GAYA_VISUAL') + '.', '',
+    'Antarmuka harus mencakup:', '', NUM(screens), '',
+    'Gunakan tombol besar, tipografi yang jelas, ikon yang konsisten, warna yang sesuai, animasi secukupnya (hormati prefers-reduced-motion), serta tata letak responsif.', '',
+    'Sesuaikan ilustrasi dan dekorasi dengan ' + V('mapel', 'MATA_PELAJARAN') + ', ' + V('materi', 'MATERI') + ', dan ' + V('gaya', 'GAYA_VISUAL') + '. Jangan mengorbankan keterbacaan demi dekorasi.'));
+
+  secs.push(L('## I. UMPAN BALIK PEMBELAJARAN', '',
+    'Setelah setiap jawaban:', '',
+    LIST(['Berikan informasi apakah jawaban benar atau salah.', 'Tampilkan pembahasan singkat.', 'Jelaskan konsep yang perlu dipahami.', 'Berikan petunjuk jika jawaban salah.', 'Gunakan bahasa yang positif dan tidak mempermalukan pemain.', 'Hubungkan pembahasan dengan tujuan pembelajaran: ' + V('tujuan', 'TUJUAN_PEMBELAJARAN') + '.']), '',
+    'Hindari umpan balik yang hanya mengatakan benar atau salah tanpa penjelasan, terutama untuk soal yang memerlukan penalaran.'));
+
+  secs.push(L('## J. LAPORAN HASIL BELAJAR', '',
+    'Pada akhir permainan, tampilkan:', '',
+    LIST(['Nama pemain atau tim.', 'Skor akhir.', 'Jumlah soal yang dikerjakan.', 'Jumlah jawaban benar dan salah.', 'Persentase ketepatan.', 'Subtopik yang telah dilatih.', 'Indikator yang masih perlu dipelajari.', 'Rekomendasi latihan berikutnya.', 'Tombol main lagi dan kembali ke menu.']), '',
+    'Berikan rekomendasi berdasarkan data jawaban yang benar-benar tercatat. Jangan menyatakan peserta didik telah menguasai suatu kompetensi hanya berdasarkan skor total permainan.'));
+
+  secs.push(L('## K. VALIDASI DAN PENGUJIAN', '',
+    'Sebelum menyelesaikan aplikasi, lakukan pemeriksaan terhadap:', '',
+    NUM(['Akurasi seluruh soal dan kunci jawaban.', 'Kesesuaian soal dengan tujuan pembelajaran.', 'Fungsi semua tombol.', 'Sistem giliran dan pergantian pemain atau tim.', 'Validasi jawaban dan skor.', 'Kondisi kemenangan dan akhir permainan.', 'Tampilan pada berbagai ukuran layar.', 'Pengulangan permainan tanpa kerusakan status.', ...G.tests]), '',
+    'Perbaiki kesalahan yang ditemukan sebelum menyajikan hasil akhir.'));
+
+  const outList = ['Kode aplikasi lengkap dalam satu file.', 'Bank soal beserta kunci dan pembahasan.', 'Mekanisme permainan yang berfungsi.', 'Desain responsif.', 'Petunjuk penggunaan.'];
+  if (opts.guide) outList.push('Halaman panduan cara bermain di kelas.');
+  outList.push('Ringkasan fitur.', 'Daftar pengujian yang dilakukan dan hasilnya.', 'Daftar asumsi yang Anda ambil untuk kolom yang belum diisi.');
+  secs.push(L('## L. OUTPUT AKHIR', '',
+    'Hasilkan aplikasi lengkap yang dapat dijalankan dan diuji.', '',
+    'Sertakan:', '', NUM(outList), '',
+    'Jangan berhenti pada perencanaan atau penjelasan. Buat aplikasi sesuai spesifikasi dan pastikan mekanisme inti permainan benar-benar berfungsi.', '',
+    'Jika ada keterbatasan platform, jelaskan secara spesifik dan jangan mengklaim fitur telah berfungsi apabila belum diimplementasikan.'));
+
+  return secs.join('\n\n');
+}
+
+function buildInfo(c, gid, g, info) {
+  const G = GAMES[gid], V = mkV(c);
+  const ratio = info.ratio || '3:4 (poster vertikal)';
+  const foot = (info.foot || '').trim() || 'Panduan Cara Bermain di Kelas';
+  const modeTxt = Array.isArray(g.mode) && g.mode.length ? g.mode.join(', ') : 'sesuai pengaturan';
+  return L(
+    '# PROMPT INFOGRAFIS PANDUAN CARA BERMAIN', '',
+    'Buat satu infografis edukasi berukuran ' + ratio + ' berjudul "' + V('judul', 'JUDUL_GAME') + ' - Panduan Cara Bermain di Kelas". Infografis ini menjelaskan cara guru menjalankan game ' + G.title + ' kepada siswa ' + V('jenjang', 'JENJANG') + ' (' + V('kelas', 'KELAS_FASE') + ') pada pelajaran ' + V('mapel', 'MATA_PELAJARAN') + ' dengan materi ' + V('materi', 'MATERI') + '.', '',
+    '## Gaya visual', '',
+    LIST([
+      'Ilustrasi kartun semi-3D yang cerah, ramah anak, dengan warna dominan yang selaras dengan tema game dan nuansa ' + V('gaya', 'GAYA_VISUAL') + '.',
+      'Setiap langkah berada dalam kartu bernomor berbingkai tegas dengan ikon atau cuplikan mini tampilan game.',
+      'Karakter guru dan siswa kartun yang orisinal, beragam, dan ramah. Jangan memakai karakter, logo, atau merek berhak cipta.',
+      'Tipografi tebal, besar, dan sangat mudah dibaca. Kontras tinggi antara teks dan latar.',
+    ]), '',
+    '## Struktur', '',
+    NUM([
+      'Header: judul game besar, subjudul singkat, dan tiga lencana informasi (' + G.badges.join('; ') + ').',
+      'Bagian langkah bermain: ' + G.steps.length + ' kartu bernomor dengan susunan grid rapi (lihat isi di bawah).',
+      'Panel "Aturan Penting" berisi tiga poin.',
+      'Panel "Tips untuk Guru" berisi tiga poin.',
+      'Footer: "' + foot + '".',
+    ]), '',
+    '## Isi teks (tulis persis dengan ejaan benar)', '',
+    '### Mode: ' + modeTxt, '',
+    NUM(G.steps.map(s => s[0] + ': ' + s[1])), '',
+    '### Aturan Penting', '', LIST(G.rules), '',
+    '### Tips untuk Guru', '', LIST(G.tips), '',
+    '## Ketentuan', '',
+    LIST([
+      'Seluruh teks dalam bahasa Indonesia dan tidak ada teks acak atau tidak terbaca.',
+      'Tata letak rapi, tidak ada elemen yang saling menimpa, dan margin cukup.',
+      'Jika contoh soal ditampilkan pada cuplikan layar, gunakan contoh yang benar secara akademik dan sesuai ' + V('materi', 'MATERI') + '.',
+      'Setelah gambar dibuat, periksa ejaan setiap kartu dan perbaiki bila ada kesalahan.',
+    ]));
+}
+</script>
+
+<script id="ui">
+/* ===== ANTARMUKA ===== */
+(function () {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const KEY = 'bengkel-prompt-game-edu-v1';
+
+  const commonDefaults = () => { const o = {}; COMMON.forEach(f => { if (f.def !== undefined) o[f.id] = Array.isArray(f.def) ? f.def.slice() : f.def; }); return o; };
+  let S = { game: 'ular', common: commonDefaults(), per: {}, guide: true, tab: 'prompt', info: { ratio: '3:4 (poster vertikal)', foot: '' } };
+  try { const raw = localStorage.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && GAMES[p.game]) S = Object.assign(S, p, { common: Object.assign(commonDefaults(), p.common || {}) }); } } catch (e) {}
+  let saveT = 0;
+  const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 300); };
+
+  const gStore = gid => (S.per[gid] = S.per[gid] || {});
+  const gVals = gid => gameVals(gid, gStore(gid));
+
+  /* ---- render helpers ---- */
+  function fieldHTML(f, scope, value) {
+    const id = 'f-' + scope + '-' + f.id;
+    const data = 'data-scope="' + scope + '" data-id="' + f.id + '"';
+    let ctrl = '';
+    if (f.type === 'text') ctrl = '<input id="' + id + '" type="text" ' + data + ' value="' + esc(value || '') + '" placeholder="' + esc(f.placeholder || '') + '"' + (f.list ? ' list="' + f.list + '"' : '') + ' autocomplete="off">';
+    else if (f.type === 'number') ctrl = '<input id="' + id + '" type="number" inputmode="numeric" ' + data + ' value="' + esc(value || '') + '" min="' + (f.min || 0) + '" max="' + (f.max || 999) + '">';
+    else if (f.type === 'textarea') ctrl = '<textarea id="' + id + '" ' + data + ' rows="3" placeholder="' + esc(f.placeholder || '') + '">' + esc(value || '') + '</textarea>';
+    else if (f.type === 'select') ctrl = '<select id="' + id + '" ' + data + '>' + f.opts.map(o => '<option' + (o === value ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+    else if (f.type === 'checks') {
+      const cur = Array.isArray(value) ? value : [];
+      return '<fieldset class="field' + (f.wide ? ' wide' : '') + '"><legend>' + esc(f.label) + '</legend><div class="chips">' +
+        f.opts.map(o => '<label class="chip"><input type="checkbox" ' + data + ' data-opt="' + esc(o) + '"' + (cur.indexOf(o) > -1 ? ' checked' : '') + '><span>' + esc(o) + '</span></label>').join('') +
+        '</div></fieldset>';
+    }
+    const labelTag = f.type === 'checks' ? '' : '<label for="' + id + '">' + esc(f.label) + (f.ph ? '<span class="ph">' + f.ph + '</span>' : '') + '</label>';
+    return '<div class="field' + (f.wide ? ' wide' : '') + '">' + labelTag + ctrl + (f.hint ? '<span class="hint">' + esc(f.hint) + '</span>' : '') + '</div>';
+  }
+
+  function renderCards() {
+    $('#cards').innerHTML = Object.keys(GAMES).map(k => {
+      const G = GAMES[k];
+      return '<button type="button" class="gcard" role="radio" aria-checked="' + (k === S.game) + '" data-game="' + k + '" style="--g:' + G.color + '"><span class="gico"><svg viewBox="0 0 48 48" aria-hidden="true">' + G.icon + '</svg></span><span class="gname">' + esc(G.name) + '</span><span class="gshort">' + esc(G.short) + '</span></button>';
+    }).join('');
+    const G = GAMES[S.game];
+    const n = $('#gnote'); n.textContent = G.note; n.style.setProperty('--g', G.color);
+    $('#atur-name').textContent = '· ' + G.name;
+  }
+  function renderCommon() {
+    $('#f-common').innerHTML = COMMON.map(f => fieldHTML(f, 'common', S.common[f.id])).join('') +
+      '<div class="field wide"><div class="lab">Halaman panduan di dalam game</div><div class="chips"><label class="chip"><input type="checkbox" id="opt-guide"' + (S.guide ? ' checked' : '') + '><span>Minta halaman panduan cara bermain di kelas</span></label></div></div>';
+  }
+  function renderGameForm() {
+    const G = GAMES[S.game], vals = gVals(S.game);
+    const groups = [['dasar', 'Soal dan mode'], ['aturan', 'Aturan permainan'], ['nilai', 'Penilaian dan gamifikasi']];
+    let html = '';
+    groups.forEach(([gk, title]) => {
+      const fs = G.fields.filter(f => f.group === gk);
+      if (!fs.length) return;
+      html += '<h3 class="sub-h">' + title + '</h3>';
+      if (gk === 'dasar' && G.fixedFormat) html += '<div class="field wide"><span class="lab">Bentuk soal</span><span class="hint">Tetap: ' + esc(G.fixedFormat) + '.</span></div>';
+      html += fs.map(f => fieldHTML(f, 'game', vals[f.id])).join('');
+    });
+    $('#f-game').innerHTML = html;
+  }
+
+  /* ---- output ---- */
+  const hl = text => text.split('\n').map(l => {
+    let s = esc(l).replace(/\[([A-Z][A-Z0-9_]{2,})\]/g, '<mark>[$1]</mark>');
+    if (/^#{1,3} /.test(l)) s = '<span class="hd">' + s + '</span>';
+    return s;
+  }).join('\n');
+
+  let currentText = '';
+  function update() {
+    const g = gVals(S.game);
+    const text = S.tab === 'prompt' ? buildMaster(S.common, S.game, g, { guide: S.guide }) : buildInfo(S.common, S.game, g, S.info);
+    currentText = text;
+    $('#out').innerHTML = hl(text);
+    const miss = [...new Set(text.match(/\[[A-Z][A-Z0-9_]{2,}\]/g) || [])];
+    const words = text.trim().split(/\s+/).length.toLocaleString('id-ID');
+    const m = '<b>' + words + '</b> kata · ' + (miss.length ? '<b>' + miss.length + '</b> kolom belum diisi' : 'semua kolom terisi');
+    $('#meta').innerHTML = m; $('#meta2').innerHTML = m;
+    const mi = $('#miss');
+    if (miss.length) { mi.hidden = false; mi.textContent = 'Belum diisi: ' + miss.map(x => x.slice(1, -1)).join(' · '); } else mi.hidden = true;
+    $('#extra').hidden = S.tab !== 'info';
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
+    $('#out').setAttribute('aria-labelledby', S.tab === 'prompt' ? 'tab-prompt' : 'tab-info');
+    save();
+  }
+
+  /* ---- events ---- */
+  function onField(e) {
+    const t = e.target;
+    if (t.id === 'opt-guide') { S.guide = t.checked; update(); return; }
+    if (t.id === 'i-ratio') { S.info.ratio = t.value; update(); return; }
+    if (t.id === 'i-foot') { S.info.foot = t.value; update(); return; }
+    const scope = t.dataset && t.dataset.scope; if (!scope) return;
+    const id = t.dataset.id;
+    const store = scope === 'common' ? S.common : gStore(S.game);
+    if (t.type === 'checkbox') {
+      const f = (scope === 'common' ? COMMON : GAMES[S.game].fields).find(x => x.id === id);
+      const cur = Array.isArray(store[id]) ? store[id].slice() : (f && Array.isArray(f.def) ? f.def.slice() : []);
+      const opt = t.dataset.opt, i = cur.indexOf(opt);
+      if (t.checked && i < 0) cur.push(opt); if (!t.checked && i > -1) cur.splice(i, 1);
+      store[id] = cur;
+    } else store[id] = t.value;
+    update();
+  }
+  document.addEventListener('input', onField);
+  document.addEventListener('change', e => { if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') onField(e); });
+
+  $('#cards').addEventListener('click', e => {
+    const b = e.target.closest('.gcard'); if (!b) return;
+    S.game = b.dataset.game; renderCards(); renderGameForm(); update();
+  });
+  $('#cards').addEventListener('keydown', e => {
+    if (!/^Arrow/.test(e.key)) return;
+    const keys = Object.keys(GAMES); let i = keys.indexOf(S.game);
+    i = (i + (/Right|Down/.test(e.key) ? 1 : keys.length - 1)) % keys.length;
+    S.game = keys[i]; renderCards(); renderGameForm(); update();
+    const nb = $('.gcard[data-game="' + S.game + '"]'); if (nb) nb.focus(); e.preventDefault();
+  });
+  $('#btn-example').addEventListener('click', () => { S.common = Object.assign(commonDefaults(), EXAMPLE); renderCommon(); update(); toast('Contoh materi dimasukkan. Ganti dengan data kelas Anda.'); });
+  $('#btn-clear').addEventListener('click', () => { S.common = Object.assign(commonDefaults(), { judul: '', kelas: '', mapel: '', materi: '', tujuan: '', indikator: '', konteks: '', gaya: '' }); renderCommon(); update(); });
+  $('#btn-reset').addEventListener('click', () => { S.per[S.game] = {}; renderGameForm(); update(); toast('Aturan ' + GAMES[S.game].name + ' dikembalikan ke bawaan.'); });
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { S.tab = t.dataset.tab; update(); }));
+
+  /* ---- copy ---- */
+  let toastT = 0;
+  function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2200); }
+  function selectOut() { const r = document.createRange(); r.selectNodeContents($('#out')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  function flash() { ['#btn-copy', '#btn-copy2'].forEach(id => { const b = $(id); b.classList.add('ok'); b.textContent = 'Tersalin'; setTimeout(() => { b.classList.remove('ok'); b.textContent = 'Salin prompt'; }, 1600); }); }
+  function copy() {
+    const fallback = () => {
+      selectOut(); let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      if (ok) { flash(); toast('Prompt disalin'); } else toast('Teks sudah dipilih. Tekan Ctrl+C atau Salin pada menu perangkat.');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(currentText).then(() => { flash(); toast('Prompt disalin'); }, fallback);
+    } else fallback();
+  }
+  $('#btn-copy').addEventListener('click', copy); $('#btn-copy2').addEventListener('click', copy);
+
+  /* ---- boot ---- */
+  $('#i-ratio').value = S.info.ratio; $('#i-foot').value = S.info.foot || '';
+  renderCards(); renderCommon(); renderGameForm(); update();
+})();
+</script>
+
+</body></html>
