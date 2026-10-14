@@ -1,7 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Bengkel Prompt Game Edu</title>
+<title>Bengkel Prompt Edu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lilita+One&display=swap">
 <style>
+
 /* Layout: kiri = tiga langkah isian (pilih game, bahan ajar, aturan game); kanan = konsol prompt yang menempel saat menggulir.
    Warna: biru tinta kelas, emas sebagai penanda aksi, tiap game punya warna sendiri (--g). */
 :root{
@@ -115,8 +117,238 @@ pre#out mark{background:color-mix(in srgb,var(--hole) 22%,transparent);color:var
 @media (min-width:1040px){#toast{bottom:28px}}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 .foot{margin-top:28px;color:var(--muted);font-size:13px;max-width:80ch}
+
+
+/* Layout: kiri = tiga langkah isian (pilih bidang, isi konfigurasi, atur simulasi); kanan = konsol prompt yang menempel saat menggulir.
+   Warna: biru tinta kelas, emas sebagai penanda aksi, tiap bidang punya warna sendiri (--g). */
+:root{
+  --bg:#F1F3FA; --surface:#FFFFFF; --surface2:#E6EAF6; --fg:#121B38; --muted:#4D5985; --line:#D2D8EC;
+  --accent:#F2A900; --accent-ink:#1A1400; --focus:#2D6BFF; --ok:#17814A; --warn:#B3261E;
+  --console:#0D1530; --console-fg:#E6EAFF; --console-muted:#93A0CF; --console-line:#27335F; --hole:#FFC21A; --head:#9FB8FF;
+  --f-display:'Lilita One','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1026; --surface:#131C3F; --surface2:#1C2753; --fg:#EAEEFF; --muted:#9AA6D6; --line:#2A3869;
+    --accent:#FFC21A; --accent-ink:#1A1400; --focus:#7FA2FF; --ok:#4CCB8A; --warn:#FF8A80;
+    --console:#060B1D; --console-line:#222E58; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1026; --surface:#131C3F; --surface2:#1C2753; --fg:#EAEEFF; --muted:#9AA6D6; --line:#2A3869;
+  --accent:#FFC21A; --accent-ink:#1A1400; --focus:#7FA2FF; --ok:#4CCB8A; --warn:#FF8A80;
+  --console:#060B1D; --console-line:#222E58; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 96px}
+.wrap{max-width:1320px;margin:0 auto}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{display:flex;flex-direction:column;gap:6px;padding-bottom:20px;max-width:760px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,5vw,46px);line-height:1.05;text-wrap:balance}
+.lede{color:var(--muted);max-width:62ch}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width:1040px){.grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px}}
+.left{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.step-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.step-n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:var(--f-display);font-size:16px}
+.step-h h2{font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.15}
+.step-h .spacer{flex:1}
+.step-sub{color:var(--muted);font-size:14px;margin-top:-6px;max-width:68ch}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.gcard{--g:#2E9E4F;text-align:left;cursor:pointer;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.gcard:hover{border-color:var(--g)}
+.gcard[aria-checked="true"]{border-color:var(--g);background:color-mix(in srgb,var(--g) 13%,var(--surface))}
+.gico{width:42px;height:42px;border-radius:10px;background:var(--g);display:grid;place-items:center}
+.gico svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.gname{font-weight:700;line-height:1.2}
+.gshort{font-size:12.5px;color:var(--muted);line-height:1.35}
+.gnote{--g:#2E9E4F;border-left:4px solid var(--g);background:color-mix(in srgb,var(--g) 10%,var(--surface));padding:10px 14px;border-radius:0 10px 10px 0;font-size:14px}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px 16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field>label,.field>legend,.field>.lab{font-weight:600;font-size:13.5px}
+.hint{font-size:12.5px;color:var(--muted)}
+.ph{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500;margin-left:6px}
+input[type=text],input[type=number],select,textarea{width:100%;min-width:0;background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:9px 11px}
+textarea{resize:vertical;min-height:64px}
+input:focus,select:focus,textarea:focus{border-color:var(--focus)}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip span{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13.5px;line-height:1.3}
+.chip input:checked+span{background:color-mix(in srgb,var(--accent) 26%,var(--surface));border-color:var(--accent)}
+.chip input:checked+span::before{content:"\2713";font-weight:700}
+.chip input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.sub-h{grid-column:1/-1;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.sub-h:first-child{border-top:0;padding-top:0;margin-top:0}
+.wsum{grid-column:1/-1;display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;padding:9px 12px;border-radius:9px;background:var(--surface2);font-variant-numeric:tabular-nums}
+.wsum.ok{color:var(--ok)}
+.wsum.bad{color:var(--warn)}
+
+.btn{cursor:pointer;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 13px;font-weight:600;font-size:13.5px}
+.btn:hover{border-color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);padding:9px 18px;font-size:14.5px}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+
+.right{min-width:0}
+.console{background:var(--console);color:var(--console-fg);border-radius:16px;border:1px solid var(--console-line);display:flex;flex-direction:column;overflow:hidden}
+@media (min-width:1040px){
+  .right{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px)}
+  .console{max-height:calc(100vh - 28px)}
+  .mbar{display:none!important}
+}
+.c-head{display:flex;flex-direction:column;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--console-line)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{cursor:pointer;border:0;background:transparent;color:var(--console-muted);padding:7px 12px;border-radius:8px;font-weight:600;font-size:13.5px}
+.tab[aria-selected="true"]{background:var(--console-line);color:var(--console-fg)}
+.c-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.c-meta{flex:1;min-width:150px;font-size:12.5px;color:var(--console-muted)}
+.c-meta b{color:var(--console-fg);font-weight:600}
+.c-miss{font-size:12px;color:var(--hole);font-family:var(--f-mono);overflow-wrap:anywhere}
+.btn.ghost{background:transparent;border-color:var(--console-line);color:var(--console-fg)}
+.btn.ghost:hover{border-color:var(--console-fg)}
+pre#out{margin:0;padding:16px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:12.5px;line-height:1.65;flex:1;min-height:260px;max-height:62vh;tab-size:2}
+@media (min-width:1040px){pre#out{max-height:none}}
+pre#out .hd{color:var(--head);font-weight:500}
+pre#out mark{background:color-mix(in srgb,var(--hole) 22%,transparent);color:var(--hole);border-radius:4px;padding:0 2px}
+
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-top:1px solid var(--line)}
+.mbar .c-meta{color:var(--muted);min-width:0}
+.mbar .c-meta b{color:var(--fg)}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:calc(100% - 32px);text-align:center}
+#toast.on{opacity:1}
+@media (min-width:1040px){#toast{bottom:28px}}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+.foot{margin-top:8px;color:var(--muted);font-size:13px;max-width:80ch}
+
+
+/* ===== SHELL: layar loading, pilihan bengkel, bilah pindah bengkel ===== */
+:root{--c-game:#7A5CFF;--c-lab:#1F9D6B}
+
+#boot{position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow:auto;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
+  background-color:var(--console);color:var(--console-fg);
+  background-image:linear-gradient(color-mix(in srgb,var(--console-line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--console-line) 55%,transparent) 1px,transparent 1px);
+  background-size:44px 44px;background-position:center;
+  transition:opacity .4s ease;animation:bootFail .01s linear 9s forwards}
+#boot::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,var(--console) 78%)}
+#boot.out{opacity:0;pointer-events:none}
+@keyframes bootFail{to{opacity:0;visibility:hidden}}
+.boot-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;max-width:420px;width:100%}
+.boot-logo{width:176px;max-width:60%;height:auto;margin-bottom:6px;overflow:visible}
+.boot-eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--console-muted);font-weight:600;margin:0}
+.boot-title{font-family:var(--f-display);font-size:clamp(32px,8vw,52px);line-height:1.04;margin:0;text-wrap:balance}
+.boot-bar{width:min(320px,100%);height:8px;border-radius:999px;background:var(--console-line);overflow:hidden;margin-top:6px}
+.boot-bar span{display:block;height:100%;width:0;border-radius:999px;background:var(--hole)}
+.boot-msg{margin:0;min-height:1.6em;font-family:var(--f-mono);font-size:12.5px;color:var(--console-muted)}
+.boot-in .btn.ghost{margin-top:6px}
+.die,.bub{transform-box:fill-box;transform-origin:center}
+.die{animation:wob 2.2s ease-in-out infinite}
+.bub{animation:rise 1.8s ease-in infinite;opacity:0}
+.bub:nth-of-type(2){animation-delay:.6s}
+.bub:nth-of-type(3){animation-delay:1.2s}
+@keyframes wob{0%,100%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(9deg) translateY(-7px)}}
+@keyframes rise{0%{transform:translateY(0);opacity:0}25%{opacity:1}100%{transform:translateY(-24px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.die,.bub{animation:none}.bub{opacity:1}#boot{transition:none}}
+
+.choose{max-width:1320px;margin:0 auto}
+.pick-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:760px){.pick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pick{--g:#7A5CFF;text-align:left;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-width:0;
+  background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:24px}
+.pick:hover{border-color:var(--g)}
+.pick-ico{width:56px;height:56px;border-radius:14px;background:var(--g);display:grid;place-items:center}
+.pick-ico svg{width:36px;height:36px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pick-name{display:block;font-family:var(--f-display);font-size:clamp(24px,3.4vw,30px);line-height:1.1}
+.pick-desc{display:block;color:var(--muted);max-width:46ch}
+.pick-list{display:flex;flex-wrap:wrap;gap:6px}
+.pick-list span{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 10px;font-size:13px;line-height:1.35}
+.pick-out{display:block;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.pick-go{display:inline-block;margin-top:4px;background:var(--accent);color:var(--accent-ink);border-radius:9px;padding:9px 18px;font-weight:700;font-size:14.5px}
+.pick:hover .pick-go{filter:brightness(1.06)}
+
+.hubwrap{max-width:1320px;margin:0 auto 18px}
+.hub{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1.5px solid var(--line);background:var(--surface);border-radius:999px}
+.seg button{cursor:pointer;border:0;background:transparent;border-radius:999px;padding:6px 14px;font-weight:600;font-size:13.5px}
+.seg button[aria-current="true"]{background:var(--fg);color:var(--bg)}
+
 </style>
 
+<div id="boot" role="status" aria-live="polite" aria-label="Memuat Bengkel Prompt Edu">
+  <div class="boot-in">
+    <svg class="boot-logo" viewBox="0 0 168 104" aria-hidden="true">
+      <g class="die"><rect x="14" y="26" width="52" height="52" rx="10" fill="none" stroke="var(--hole)" stroke-width="4"/>
+        <circle cx="28" cy="40" r="4" fill="var(--hole)"/><circle cx="52" cy="40" r="4" fill="var(--hole)"/><circle cx="40" cy="52" r="4" fill="var(--hole)"/><circle cx="28" cy="64" r="4" fill="var(--hole)"/><circle cx="52" cy="64" r="4" fill="var(--hole)"/></g>
+      <g transform="translate(96 8)">
+        <path d="M18 0h16M20 0v28L4 70a8 8 0 0 0 7 12h30a8 8 0 0 0 7-12L32 28V0" fill="none" stroke="var(--head)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 58h32" stroke="var(--head)" stroke-width="4" stroke-linecap="round"/>
+        <circle class="bub" cx="22" cy="52" r="3.5" fill="var(--hole)"/><circle class="bub" cx="31" cy="48" r="3" fill="var(--hole)"/><circle class="bub" cx="26" cy="44" r="2.5" fill="var(--hole)"/>
+      </g>
+    </svg>
+    <p class="boot-eyebrow">Untuk guru dan pembuat konten ajar</p>
+    <p class="boot-title">Bengkel Prompt Edu</p>
+    <div class="boot-bar" id="boot-bar" role="progressbar" aria-label="Kemajuan memuat" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="boot-fill"></span></div>
+    <p class="boot-msg" id="boot-msg">Menyiapkan papan permainan</p>
+    <button type="button" class="btn ghost" id="boot-skip">Lewati</button>
+  </div>
+</div>
+
+<section id="choose" class="choose" aria-labelledby="h-choose">
+  <header class="top">
+    <p class="eyebrow">Pilih bengkel</p>
+    <h1 id="h-choose">Bengkel Prompt Edu</h1>
+    <p class="lede">Dua bengkel dalam satu halaman. Pilih jenis media belajar yang ingin dibuat, isi bahan ajar satu kali, lalu salin prompt untuk Claude, Gemini, atau ChatGPT.</p>
+  </header>
+  <div class="pick-grid">
+    <button type="button" class="pick" style="--g:#7A5CFF" data-go="game">
+      <span class="pick-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="8" width="32" height="32" rx="7"/><circle cx="17" cy="17" r="1.5"/><circle cx="31" cy="17" r="1.5"/><circle cx="24" cy="24" r="1.5"/><circle cx="17" cy="31" r="1.5"/><circle cx="31" cy="31" r="1.5"/></svg></span>
+      <span class="pick-name">Bengkel Prompt Game Edu</span>
+      <span class="pick-desc">Buat game kelas yang bisa langsung dimainkan dan menilai jawaban siswa.</span>
+      <span class="pick-list" aria-hidden="true"><span>Ular Tangga</span><span>Tic Tac Toe</span><span>Millionaire Edu</span><span>Bounce Edu</span><span>TTS Edu</span><span>Mystery Box</span><span>Family 100 Edu</span></span>
+      <span class="pick-out">Hasil: master prompt game dan prompt infografis panduan</span>
+      <span class="pick-go">Buka bengkel game</span>
+    </button>
+    <button type="button" class="pick" style="--g:#1F9D6B" data-go="lab">
+      <span class="pick-ico"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M18 6h12M20 6v14L9 38a4 4 0 0 0 3.5 6h23A4 4 0 0 0 39 38L28 20V6"/><path d="M14 32h20"/></svg></span>
+      <span class="pick-name">Bengkel Prompt Lab Maya</span>
+      <span class="pick-desc">Buat laboratorium virtual dengan simulasi, LKPD, evaluasi, dan laporan praktikum.</span>
+      <span class="pick-list" aria-hidden="true"><span>Sains</span><span>Teknologi</span><span>Teknik</span><span>Kesehatan</span><span>Bisnis</span><span>Pariwisata</span><span>Seni</span><span>Bidang lainnya</span></span>
+      <span class="pick-out">Hasil: prompt Lab Maya dan ringkasan spesifikasi</span>
+      <span class="pick-go">Buka bengkel lab</span>
+    </button>
+  </div>
+  <p class="foot">Semua teks prompt dibuat di browser ini. Isian tersimpan di perangkat ini saja dan tidak dikirim ke mana pun.</p>
+</section>
+
+<div id="nav" class="hubwrap" hidden>
+  <nav class="hub" aria-label="Pindah bengkel">
+    <button type="button" class="btn" data-go="choose">Semua bengkel</button>
+    <div class="seg">
+      <button type="button" data-go="game" aria-current="false">Game Edu</button>
+      <button type="button" data-go="lab" aria-current="false">Lab Maya</button>
+    </div>
+  </nav>
+</div>
+<div id="stage"></div>
+
+
+<template id="tpl-game">
 <div class="wrap">
   <header class="top">
     <p class="eyebrow">Untuk guru dan pembuat konten ajar</p>
@@ -188,8 +420,72 @@ pre#out mark{background:color-mix(in srgb,var(--hole) 22%,transparent);color:var
   <option value="Minimalis bersih dengan kontras tinggi">
   <option value="Mengikuti tema materi secara otomatis">
 </datalist>
+</template>
 
-<script id="data">
+<template id="tpl-lab">
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Untuk guru, dosen, dan pembuat praktikum digital</p>
+    <h1>Bengkel Prompt Lab Maya</h1>
+    <p class="lede">Pilih bidang, isi konfigurasi praktikum satu kali, lalu salin prompt lengkap untuk Claude, Gemini, atau ChatGPT. Hasilnya adalah laboratorium virtual yang bisa dijalankan, dengan simulasi, LKPD, evaluasi, dan laporan.</p>
+  </header>
+
+  <main class="grid">
+    <div class="left">
+      <section class="step" aria-labelledby="h-bidang">
+        <div class="step-h"><span class="step-n">1</span><h2 id="h-bidang">Pilih bidang</h2></div>
+        <div class="cards" id="cards" role="radiogroup" aria-labelledby="h-bidang"></div>
+        <p class="gnote" id="gnote"></p>
+      </section>
+
+      <section class="step" aria-labelledby="h-konfig">
+        <div class="step-h">
+          <span class="step-n">2</span><h2 id="h-konfig">Isi konfigurasi praktikum</h2><span class="spacer"></span>
+          <button class="btn" type="button" id="btn-example">Isi contoh</button>
+          <button class="btn" type="button" id="btn-clear">Kosongkan</button>
+        </div>
+        <p class="step-sub">Kolom yang dikosongkan tampil sebagai penanda emas di prompt. AI pembuat aplikasi diminta memakai asumsi wajar, menyebutkannya, dan tidak mengarang standar teknis.</p>
+        <div class="fields" id="f-common"></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-atur">
+        <div class="step-h"><span class="step-n">3</span><h2 id="h-atur">Atur simulasi <span id="atur-name"></span></h2><span class="spacer"></span><button class="btn" type="button" id="btn-reset">Setel ulang aturan</button></div>
+        <div class="fields" id="f-bidang"></div>
+      </section>
+
+      <p class="foot">Semua teks prompt dibuat di browser ini. Isian tersimpan di perangkat ini saja dan tidak dikirim ke mana pun. Rumus, nilai batas, dan prosedur keselamatan yang Anda tulis akan dipakai apa adanya, jadi periksa dengan buku ajar atau standar resmi sebelum menyalin prompt.</p>
+    </div>
+
+    <aside class="right" aria-label="Hasil prompt">
+      <div class="console">
+        <div class="c-head">
+          <div class="tabs" role="tablist" aria-label="Bagian hasil">
+            <button class="tab" role="tab" id="tab-a" aria-selected="true" aria-controls="out" data-tab="a" type="button">Bagian A: Prompt Lab Maya</button>
+            <button class="tab" role="tab" id="tab-b" aria-selected="false" aria-controls="out" data-tab="b" type="button">Bagian B: Ringkasan</button>
+          </div>
+          <div class="c-bar">
+            <div class="c-meta"><span id="meta"></span></div>
+            <button class="btn ghost" type="button" id="btn-both">Salin A + B</button>
+            <button class="btn primary" type="button" id="btn-copy">Salin bagian ini</button>
+          </div>
+          <div class="c-miss" id="miss" hidden></div>
+        </div>
+        <pre id="out" tabindex="0" aria-live="off"></pre>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="mbar">
+  <div class="c-meta"><span id="meta2"></span></div>
+  <button class="btn primary" type="button" id="btn-copy2">Salin bagian ini</button>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+</template>
+
+<script>
+const GameApp = (function () {
+
 /* ===== DATA DAN PENYUSUN PROMPT (fungsi murni, tanpa DOM) ===== */
 const L = (...a) => a.join('\n');
 const LIST = a => a.map(x => '* ' + x).join('\n');
@@ -900,12 +1196,11 @@ function buildInfo(c, gid, g, info) {
       'Setelah gambar dibuat, periksa ejaan setiap kartu dan perbaiki bila ada kesalahan.',
     ]));
 }
-</script>
 
-<script id="ui">
+
 /* ===== ANTARMUKA ===== */
-(function () {
-  const $ = (s, r) => (r || document).querySelector(s);
+function mount(root) {
+  const $ = (s, r) => (r || root).querySelector(s);
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const KEY = 'bengkel-prompt-game-edu-v1';
 
@@ -913,7 +1208,7 @@ function buildInfo(c, gid, g, info) {
   let S = { game: 'ular', common: commonDefaults(), per: {}, guide: true, tab: 'prompt', info: { ratio: '3:4 (poster vertikal)', foot: '' } };
   try { const raw = localStorage.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && GAMES[p.game]) S = Object.assign(S, p, { common: Object.assign(commonDefaults(), p.common || {}) }); } } catch (e) {}
   let saveT = 0;
-  const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 300); };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
   const gStore = gid => (S.per[gid] = S.per[gid] || {});
   const gVals = gid => gameVals(gid, gStore(gid));
@@ -984,7 +1279,7 @@ function buildInfo(c, gid, g, info) {
     const mi = $('#miss');
     if (miss.length) { mi.hidden = false; mi.textContent = 'Belum diisi: ' + miss.map(x => x.slice(1, -1)).join(' · '); } else mi.hidden = true;
     $('#extra').hidden = S.tab !== 'info';
-    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
+    root.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
     $('#out').setAttribute('aria-labelledby', S.tab === 'prompt' ? 'tab-prompt' : 'tab-info');
     save();
   }
@@ -1007,8 +1302,8 @@ function buildInfo(c, gid, g, info) {
     } else store[id] = t.value;
     update();
   }
-  document.addEventListener('input', onField);
-  document.addEventListener('change', e => { if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') onField(e); });
+  root.addEventListener('input', onField);
+  root.addEventListener('change', e => { if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') onField(e); });
 
   $('#cards').addEventListener('click', e => {
     const b = e.target.closest('.gcard'); if (!b) return;
@@ -1024,7 +1319,7 @@ function buildInfo(c, gid, g, info) {
   $('#btn-example').addEventListener('click', () => { S.common = Object.assign(commonDefaults(), EXAMPLE); renderCommon(); update(); toast('Contoh materi dimasukkan. Ganti dengan data kelas Anda.'); });
   $('#btn-clear').addEventListener('click', () => { S.common = Object.assign(commonDefaults(), { judul: '', kelas: '', mapel: '', materi: '', tujuan: '', indikator: '', konteks: '', gaya: '' }); renderCommon(); update(); });
   $('#btn-reset').addEventListener('click', () => { S.per[S.game] = {}; renderGameForm(); update(); toast('Aturan ' + GAMES[S.game].name + ' dikembalikan ke bawaan.'); });
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { S.tab = t.dataset.tab; update(); }));
+  root.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { S.tab = t.dataset.tab; update(); }));
 
   /* ---- copy ---- */
   let toastT = 0;
@@ -1046,7 +1341,650 @@ function buildInfo(c, gid, g, info) {
   /* ---- boot ---- */
   $('#i-ratio').value = S.info.ratio; $('#i-foot').value = S.info.foot || '';
   renderCards(); renderCommon(); renderGameForm(); update();
+}
+return { mount };
 })();
+
+const LabApp = (function () {
+
+/* ===== DATA DAN PENYUSUN PROMPT (fungsi murni, tanpa DOM) ===== */
+const L = (...a) => a.join('\n');
+const LIST = a => a.map(x => '* ' + x).join('\n');
+const NUM = a => a.map((x, i) => (i + 1) + '. ' + x).join('\n');
+
+const JENJANG = ['SMP', 'SMA', 'SMK', 'Perguruan Tinggi'];
+const JENIS = ['Eksperimen', 'Perakitan', 'Pengukuran', 'Perancangan', 'Pemecahan Masalah', 'Prosedur Kerja', 'Praktik Layanan'];
+const INTERAKSI = ['Klik', 'Drag-and-Drop', 'Input Angka', 'Slider', 'Penyusunan Objek', 'Pengaturan Parameter'];
+const KESULITAN = ['Dasar', 'Menengah', 'Lanjut'];
+const PLATFORM = ['HTML5 + CSS + JavaScript (satu file mandiri)', 'Claude Artifacts', 'Gemini Canvas', 'ChatGPT Canvas', 'Google AI Studio', 'React', 'Platform AI lainnya'];
+const FITUR = ['Grafik', 'Animasi', 'Audio (efek suara sederhana, tanpa berkas luar)', 'Dashboard', 'Sertifikat', 'Kontras tinggi dan navigasi keyboard', 'Salin laporan sebagai teks'];
+
+const COMMON = [
+  { id: 'nama', group: 'Identitas dan kelas', label: 'Nama aplikasi (Lab Maya)', ph: 'NAMA_LAB_MAYA', type: 'text', wide: true, placeholder: 'mis. Lab Maya Hukum Ohm' },
+  { id: 'mapel', group: 'Identitas dan kelas', label: 'Mata pelajaran', ph: 'MATA_PELAJARAN', type: 'text', placeholder: 'mis. Fisika' },
+  { id: 'program', group: 'Identitas dan kelas', label: 'Program keahlian (jika ada)', ph: 'PROGRAM_KEAHLIAN', type: 'text', optional: 'tidak ada (mata pelajaran umum)', placeholder: 'mis. Teknik Komputer dan Jaringan' },
+  { id: 'jenjang', group: 'Identitas dan kelas', label: 'Jenjang', ph: 'JENJANG', type: 'select', opts: JENJANG, def: 'SMA' },
+  { id: 'kelas', group: 'Identitas dan kelas', label: 'Fase dan kelas', ph: 'FASE_KELAS', type: 'text', placeholder: 'mis. Fase E / Kelas X' },
+  { id: 'kurikulum', group: 'Identitas dan kelas', label: 'Kurikulum', ph: 'KURIKULUM', type: 'text', placeholder: 'mis. Kurikulum Merdeka', wide: true },
+  { id: 'topik', group: 'Topik dan tujuan', label: 'Topik praktikum', ph: 'TOPIK_PRAKTIKUM', type: 'text', wide: true, placeholder: 'mis. Hukum Ohm pada rangkaian seri dan paralel' },
+  { id: 'tujuan', group: 'Topik dan tujuan', label: 'Tujuan pembelajaran', ph: 'TUJUAN_PEMBELAJARAN', type: 'textarea', wide: true, placeholder: 'Salin dari modul ajar. Satu tujuan per baris. Prompt melarang AI mengarang capaian resmi.', hint: 'Satu tujuan per baris.' },
+  { id: 'alat', group: 'Topik dan tujuan', label: 'Alat dan bahan', ph: 'ALAT_DAN_BAHAN', type: 'textarea', wide: true, placeholder: 'Satu alat atau bahan per baris', hint: 'Satu alat atau bahan per baris.' },
+  { id: 'jenis', group: 'Jenis simulasi', label: 'Jenis simulasi', ph: 'JENIS_SIMULASI', type: 'select', opts: JENIS, def: 'Eksperimen' },
+  { id: 'kesulitan', group: 'Jenis simulasi', label: 'Tingkat kesulitan', ph: 'TINGKAT_KESULITAN', type: 'select', opts: KESULITAN, def: 'Menengah' },
+  { id: 'interaksi', group: 'Jenis simulasi', label: 'Interaksi utama', ph: 'INTERAKSI_UTAMA', type: 'checks', opts: INTERAKSI, def: ['Klik', 'Pengaturan Parameter'], wide: true },
+  { id: 'platform', group: 'Teknis', label: 'Platform pengembangan', ph: 'PLATFORM', type: 'select', opts: PLATFORM, def: PLATFORM[0], wide: true },
+  { id: 'fitur', group: 'Teknis', label: 'Fitur tambahan', ph: 'FITUR_TAMBAHAN', type: 'checks', opts: FITUR, def: ['Grafik', 'Animasi', 'Salin laporan sebagai teks'], wide: true },
+  { id: 'pengembang', group: 'Tab Pengembang', label: 'Nama pengembang', ph: 'NAMA_PENGEMBANG', type: 'text', placeholder: 'Nama guru atau tim' },
+  { id: 'institusi', group: 'Tab Pengembang', label: 'Institusi', ph: 'INSTITUSI', type: 'text', placeholder: 'mis. SMA Negeri 1 ...' },
+  { id: 'versi', group: 'Tab Pengembang', label: 'Versi aplikasi', ph: 'VERSI', type: 'text', def: '1.0' },
+  { id: 'tahun', group: 'Tab Pengembang', label: 'Tahun pengembangan', ph: 'TAHUN', type: 'text', def: '2026' },
+  { id: 'hakcipta', group: 'Tab Pengembang', label: 'Informasi hak cipta', ph: 'HAK_CIPTA', type: 'text', wide: true, def: 'Hak cipta dilindungi. Dikembangkan untuk keperluan pembelajaran.' },
+];
+
+const WLABEL = ['Ketepatan prosedur', 'Ketepatan penggunaan alat', 'Ketepatan pengamatan atau hasil', 'Analisis dan pemecahan masalah', 'Penerapan keselamatan'];
+
+/* Kolom khusus simulasi, sama untuk semua bidang; isi bawaan datang dari preset bidang */
+const FIELDS_B = [
+  { id: 'variabel', group: 'Mesin simulasi', label: 'Variabel yang dapat diubah pengguna', ph: 'VARIABEL_SIMULASI', type: 'textarea', wide: true, placeholder: 'mis. tegangan sumber 3 sampai 12 V, nilai resistor, susunan seri atau paralel', hint: 'Sebut rentang nilai dan satuannya.' },
+  { id: 'model', group: 'Mesin simulasi', label: 'Rumus atau aturan sebab-akibat', ph: 'RUMUS_ATURAN', type: 'textarea', wide: true, placeholder: 'Rumus, aturan teknis, atau SOP yang menjadi dasar simulasi', hint: 'Tulis hanya yang sudah Anda verifikasi. Prompt melarang AI mengarang rumus atau nilai batas.' },
+  { id: 'berhasil', group: 'Mesin simulasi', label: 'Kondisi berhasil', ph: 'KONDISI_BERHASIL', type: 'textarea', wide: true, placeholder: 'mis. semua langkah berurutan, data terisi, kesimpulan sesuai hasil' },
+  { id: 'galat', group: 'Mesin simulasi', label: 'Kesalahan umum yang ingin dilatih', ph: 'KESALAHAN_UMUM', type: 'textarea', wide: true, placeholder: 'Satu kesalahan per baris', hint: 'Satu kesalahan per baris. Tiap kesalahan akan mendapat penyebab, dampak, dan cara memperbaiki.' },
+  { id: 'durasi', group: 'Mesin simulasi', label: 'Perkiraan durasi praktikum', ph: 'DURASI', type: 'text', def: '45 menit' },
+  { id: 'jumlahSoal', group: 'Mesin simulasi', label: 'Jumlah soal evaluasi konsep', ph: 'JUMLAH_SOAL', type: 'number', min: 5, max: 40, def: '10' },
+  { id: 'apd', group: 'Keselamatan', label: 'APD dan perlengkapan yang ditampilkan', ph: 'APD', type: 'text', wide: true },
+  { id: 'bahaya', group: 'Keselamatan', label: 'Bahaya yang disimulasikan', ph: 'BAHAYA', type: 'textarea', wide: true, hint: 'Satu bahaya per baris. Kosongkan bila tidak ada bahaya nyata pada topik ini.' },
+  { id: 'w1', group: 'Bobot penilaian', label: WLABEL[0], ph: 'BOBOT', type: 'number', min: 0, max: 100 },
+  { id: 'w2', group: 'Bobot penilaian', label: WLABEL[1], ph: 'BOBOT', type: 'number', min: 0, max: 100 },
+  { id: 'w3', group: 'Bobot penilaian', label: WLABEL[2], ph: 'BOBOT', type: 'number', min: 0, max: 100 },
+  { id: 'w4', group: 'Bobot penilaian', label: WLABEL[3], ph: 'BOBOT', type: 'number', min: 0, max: 100 },
+  { id: 'w5', group: 'Bobot penilaian', label: WLABEL[4], ph: 'BOBOT', type: 'number', min: 0, max: 100 },
+];
+
+const ICON = {
+  sains: '<path d="M18 6h12M20 6v14L9 38a4 4 0 0 0 3.5 6h23A4 4 0 0 0 39 38L28 20V6"/><path d="M14 32h20"/>',
+  teknologi: '<rect x="6" y="9" width="36" height="24" rx="3"/><path d="M18 40h12M24 33v7"/>',
+  teknik: '<circle cx="24" cy="24" r="7"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.5 10.5l4.2 4.2M33.3 33.3l4.2 4.2M10.5 37.5l4.2-4.2M33.3 14.7l4.2-4.2"/>',
+  kesehatan: '<path d="M19 7h10v12h12v10H29v12H19V29H7V19h12z"/>',
+  bisnis: '<path d="M8 40V24M20 40V14M32 40V28M4 42h40"/>',
+  pariwisata: '<path d="M24 44S10 30 10 19a14 14 0 0 1 28 0c0 11-14 25-14 25z"/><circle cx="24" cy="19" r="5"/>',
+  seni: '<circle cx="24" cy="24" r="17"/><circle cx="16" cy="21" r="2"/><circle cx="24" cy="14" r="2"/><circle cx="32" cy="21" r="2"/>',
+  lainnya: '<rect x="8" y="8" width="13" height="13"/><rect x="27" y="8" width="13" height="13"/><rect x="8" y="27" width="13" height="13"/><rect x="27" y="27" width="13" height="13"/>',
+};
+
+const BIDANG = {
+sains: {
+  name: 'Sains', color: '#1F9D6B', icon: ICON.sains, short: 'Fisika, kimia, biologi, IPA, dan eksperimen terkontrol',
+  note: 'Cocok untuk eksperimen dengan variabel bebas, terikat, dan kontrol. Simulasi harus mengikuti hubungan sebab-akibat ilmiah, bukan hasil acak.',
+  env: 'laboratorium sains yang bersih: meja kerja, alat ukur, label satuan SI, dan panel data pengamatan yang terbaca jelas',
+  jenis: 'Eksperimen', interaksi: ['Slider', 'Input Angka', 'Pengaturan Parameter'],
+  teori: 'konsep, hukum atau persamaan beserta satuan, diagram prinsip kerja alat ukur, dan contoh fenomena sehari-hari',
+  prosedur: 'persiapan alat, kalibrasi atau pemeriksaan alat ukur, urutan langkah eksperimen, dan cara membaca skala',
+  apd: 'jas laboratorium, kacamata pelindung, sarung tangan bila bahan kimia terlibat',
+  bahaya: 'Bahan kimia mengenai kulit atau mata\nPemanasan tanpa pengawasan\nPeralatan kaca pecah',
+  w: [25, 15, 25, 20, 15], wd: ['urutan langkah eksperimen', 'pemilihan dan pembacaan alat ukur', 'kebenaran data dan satuan', 'menarik kesimpulan dari data', 'APD dan penanganan bahan'],
+  tests: ['Hasil simulasi sama untuk masukan yang sama dan berubah sesuai rumus saat variabel diubah.', 'Satuan dan angka penting konsisten di tabel, grafik, dan laporan.'],
+},
+teknologi: {
+  name: 'Teknologi', color: '#2D6BFF', icon: ICON.teknologi, short: 'Jaringan, pemrograman, perangkat keras, dan sistem digital',
+  note: 'Cocok untuk perakitan perangkat, konfigurasi jaringan, dan debugging. Setiap konfigurasi diperiksa oleh aturan teknis yang jelas, misalnya urutan kabel atau alamat IP.',
+  env: 'ruang kerja teknisi: meja kerja, perangkat, kabel, terminal atau panel konfigurasi, dan indikator status berwarna',
+  jenis: 'Perakitan', interaksi: ['Drag-and-Drop', 'Klik', 'Input Angka'],
+  teori: 'arsitektur sistem, protokol atau standar yang dipakai, diagram topologi atau alur, dan istilah teknis',
+  prosedur: 'persiapan perangkat, urutan konfigurasi atau perakitan, pengujian koneksi atau fungsi, dan dokumentasi hasil',
+  apd: 'gelang antistatik, kacamata pelindung bila memotong atau mengupas kabel',
+  bahaya: 'Listrik statis merusak komponen\nMengerjakan perangkat yang masih terhubung ke listrik\nKabel terkelupas dan tajam',
+  w: [30, 20, 20, 20, 10], wd: ['urutan perakitan atau konfigurasi', 'pemilihan perangkat dan komponen', 'hasil uji fungsi atau koneksi', 'pelacakan dan perbaikan galat', 'keselamatan kerja dan perangkat'],
+  tests: ['Setiap konfigurasi yang salah ditolak oleh aturan yang sama, dengan pesan yang menyebut bagian yang keliru.', 'Hasil uji koneksi atau fungsi hanya muncul bila seluruh langkah prasyarat terpenuhi.'],
+},
+teknik: {
+  name: 'Teknik', color: '#E5432F', icon: ICON.teknik, short: 'Otomotif, listrik, mesin, konstruksi, dan pengukuran',
+  note: 'Cocok untuk praktik bengkel: pengukuran, pembongkaran dan pemasangan, serta pelacakan kerusakan. Aspek K3 mendapat bobot nyata.',
+  env: 'bengkel atau workshop: meja kerja, alat tangan dan alat ukur, tampilan skala atau display, dan penanda zona aman',
+  jenis: 'Pengukuran', interaksi: ['Klik', 'Drag-and-Drop', 'Pengaturan Parameter'],
+  teori: 'prinsip kerja sistem, fungsi komponen, gambar teknik atau skema sederhana, dan batas toleransi dari buku manual yang Anda sebutkan',
+  prosedur: 'persiapan alat, pemeriksaan alat sebelum dipakai, urutan kerja sesuai SOP, penggunaan alat ukur, dan penyimpanan alat',
+  apd: 'wearpack, sepatu keselamatan, kacamata pelindung, sarung tangan',
+  bahaya: 'Sengatan listrik\nAlat ukur dipasang pada rentang yang salah\nKomponen panas atau bertegangan tersentuh',
+  w: [25, 25, 20, 10, 20], wd: ['urutan kerja sesuai SOP', 'pemilihan dan pemasangan alat', 'ketepatan hasil ukur', 'analisis penyebab kerusakan', 'K3 dan pemakaian APD'],
+  tests: ['Tindakan berbahaya menghentikan simulasi dan menampilkan prosedur yang benar.', 'Nilai ukur berubah sesuai kondisi komponen dan rentang alat yang dipilih.'],
+},
+kesehatan: {
+  name: 'Kesehatan', color: '#D6317A', icon: ICON.kesehatan, short: 'Keperawatan, farmasi, gizi, dan prosedur klinis dasar',
+  note: 'Cocok untuk prosedur yang urutannya penting. Simulasi memakai pasien dan situasi virtual yang terkendali, tanpa memberi saran medis untuk kasus nyata.',
+  env: 'ruang praktik klinik yang tenang: tempat tidur atau meja periksa, alat kesehatan, lembar catatan, dan indikator kepatuhan prosedur',
+  jenis: 'Prosedur Kerja', interaksi: ['Klik', 'Penyusunan Objek'],
+  teori: 'tujuan dan indikasi prosedur, prinsip pencegahan infeksi, fungsi alat, dan contoh penerapan di fasilitas kesehatan',
+  prosedur: 'persiapan alat dan lingkungan, urutan langkah sesuai SOP yang Anda lampirkan, pemeriksaan sebelum tindakan, dan pencatatan',
+  apd: 'masker, sarung tangan, celemek atau jas praktik sesuai prosedur',
+  bahaya: 'Kontaminasi silang\nAlat tidak steril digunakan\nLangkah penting terlewat',
+  w: [35, 10, 10, 10, 35], wd: ['urutan langkah sesuai SOP', 'pemilihan alat', 'pencatatan dan hasil tindakan', 'pengambilan keputusan pada situasi tak terduga', 'pencegahan infeksi dan keselamatan pasien'],
+  tests: ['Melewati langkah wajib atau menyentuh area terkontaminasi memicu peringatan dan pengurangan nilai yang jelas.', 'Tidak ada konten yang berbunyi seperti diagnosis atau dosis untuk kasus nyata.'],
+},
+bisnis: {
+  name: 'Bisnis', color: '#F08A00', icon: ICON.bisnis, short: 'Akuntansi, pemasaran, administrasi, dan kewirausahaan',
+  note: 'Cocok untuk pencatatan transaksi, perhitungan harga, dan simulasi usaha. Aturan hitung dan kaidah akuntansi harus eksplisit sehingga skor dapat diverifikasi.',
+  env: 'kantor atau toko virtual: meja administrasi, dokumen sumber, formulir, kalkulator, dan panel ringkasan angka',
+  jenis: 'Pemecahan Masalah', interaksi: ['Input Angka', 'Drag-and-Drop', 'Klik'],
+  teori: 'konsep dan istilah, kaidah pencatatan atau rumus hitung, contoh dokumen, dan penerapan pada usaha nyata',
+  prosedur: 'pengumpulan dokumen sumber, urutan pencatatan atau analisis, pemeriksaan keseimbangan atau kewajaran angka, dan pelaporan',
+  apd: '',
+  bahaya: '',
+  w: [35, 10, 25, 30, 0], wd: ['urutan kerja administrasi', 'ketepatan memakai dokumen dan formulir', 'ketepatan angka dan hasil hitung', 'analisis dan keputusan usaha', ''],
+  tests: ['Perhitungan memakai aturan yang tertulis dan diuji dengan minimal tiga set angka berbeda.', 'Dokumen atau transaksi tidak seimbang menghasilkan pesan galat yang menyebut selisihnya.'],
+},
+pariwisata: {
+  name: 'Pariwisata', color: '#009C9C', icon: ICON.pariwisata, short: 'Perhotelan, tata boga, layanan tamu, dan perjalanan wisata',
+  note: 'Cocok untuk praktik layanan: percakapan dengan tamu, urutan layanan, dan penanganan keluhan. Respons tamu mengikuti aturan skenario, bukan acak.',
+  env: 'area layanan: meja resepsionis, restoran, atau kantor perjalanan, dengan tamu virtual, dokumen layanan, dan indikator kepuasan tamu',
+  jenis: 'Praktik Layanan', interaksi: ['Klik', 'Penyusunan Objek', 'Input Angka'],
+  teori: 'standar pelayanan yang Anda sebutkan, etika komunikasi, istilah profesi, dan contoh situasi layanan nyata',
+  prosedur: 'persiapan area dan perlengkapan, urutan layanan dari menyambut hingga menutup, pemeriksaan kelengkapan dokumen, dan penanganan permintaan khusus',
+  apd: 'seragam dan penampilan sesuai standar layanan, perlengkapan kebersihan bila relevan',
+  bahaya: 'Data tamu salah dicatat\nLantai licin atau peralatan panas di area layanan',
+  w: [40, 10, 15, 25, 10], wd: ['urutan layanan dan sikap melayani', 'penggunaan peralatan dan sistem layanan', 'ketepatan dokumen dan hasil layanan', 'penanganan keluhan atau permintaan khusus', 'kebersihan dan keselamatan'],
+  tests: ['Respons tamu virtual berubah sesuai pilihan kalimat dan tindakan pemain, dengan aturan yang bisa dijelaskan.', 'Skor kepuasan tamu dihitung dari kriteria tertulis, bukan angka acak.'],
+},
+seni: {
+  name: 'Seni', color: '#7A5CFF', icon: ICON.seni, short: 'Seni rupa, desain, musik, dan produksi kreatif',
+  note: 'Cocok untuk eksplorasi unsur dan prinsip seni. Penilaian memakai kriteria yang dapat diamati, misalnya komposisi, kontras, dan ketepatan teknik.',
+  env: 'studio kreatif: kanvas atau area karya, palet alat, panel parameter, dan pratinjau hasil yang berubah langsung',
+  jenis: 'Perancangan', interaksi: ['Slider', 'Drag-and-Drop', 'Pengaturan Parameter'],
+  teori: 'unsur dan prinsip seni, teknik, istilah, contoh karya ternama yang boleh dijelaskan dengan kata-kata, dan penerapan dalam desain',
+  prosedur: 'persiapan alat dan bahan, tahapan berkarya, pemeriksaan hasil terhadap brief, dan perbaikan karya',
+  apd: 'celemek, sarung tangan bila memakai cat atau bahan kimia, kebersihan area kerja',
+  bahaya: '',
+  w: [20, 25, 25, 30, 0], wd: ['tahapan berkarya', 'pemilihan dan pemakaian alat atau teknik', 'kesesuaian hasil dengan brief', 'refleksi dan perbaikan karya', ''],
+  tests: ['Perubahan parameter menghasilkan perubahan visual atau bunyi yang sesuai aturan, bukan efek acak.', 'Karya yang dihasilkan dinilai dengan kriteria tertulis yang sama untuk semua pemain.'],
+},
+lainnya: {
+  name: 'Bidang lainnya', color: '#5B6B99', icon: ICON.lainnya, short: 'Agribisnis, tata boga, pelayaran, dan bidang lain',
+  note: 'Pilih bila bidang Anda tidak ada di daftar. Prompt tetap meminta aturan sebab-akibat dan keselamatan yang sesuai kegiatan, dengan asumsi yang dinyatakan terbuka.',
+  env: 'lingkungan kerja yang sesuai bidang tersebut, dengan alat, bahan, dan indikator hasil yang realistis',
+  jenis: 'Prosedur Kerja', interaksi: ['Klik', 'Drag-and-Drop', 'Pengaturan Parameter'],
+  teori: 'konsep dasar, prinsip kerja, istilah, dan contoh penerapan di dunia kerja',
+  prosedur: 'persiapan alat dan bahan, urutan kerja, pemeriksaan sebelum praktik, dan penggunaan alat',
+  apd: 'perlengkapan keselamatan yang sesuai kegiatan',
+  bahaya: 'Alat atau bahan dipakai tidak sesuai prosedur',
+  w: [25, 20, 20, 20, 15], wd: ['urutan kerja', 'penggunaan alat dan bahan', 'ketepatan hasil kerja', 'analisis dan pemecahan masalah', 'keselamatan kerja'],
+  tests: ['Setiap bobot rubrik berhubungan dengan sesuatu yang benar-benar dinilai oleh logika aplikasi.'],
+},
+};
+
+/* Contoh isian, satu per bidang; semua isinya konsep dasar yang umum dikenal */
+const EXAMPLE = {
+sains: { c: { nama: 'Lab Maya Hukum Ohm', mapel: 'Fisika', program: '', jenjang: 'SMA', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Hukum Ohm pada rangkaian seri dan paralel',
+  tujuan: 'Menyusun rangkaian listrik sederhana secara seri dan paralel\nMengukur kuat arus dan tegangan dengan amperemeter dan voltmeter\nMenyimpulkan hubungan antara tegangan, arus, dan hambatan', alat: 'Baterai atau catu daya\nResistor dengan nilai berbeda\nAmperemeter\nVoltmeter\nKabel penghubung\nSaklar', jenis: 'Eksperimen', interaksi: ['Slider', 'Input Angka', 'Pengaturan Parameter'] },
+  b: { variabel: 'Tegangan sumber 3 sampai 12 V (langkah 1 V); nilai resistor R1 dan R2 dipilih dari daftar tetap; susunan seri atau paralel', model: 'V = I × R. Seri: R total = R1 + R2 dengan arus sama di semua resistor. Paralel: 1/R total = 1/R1 + 1/R2 dengan tegangan sama di semua cabang.', berhasil: 'Rangkaian tertutup dan benar, amperemeter terpasang seri, voltmeter terpasang paralel, minimal lima data tercatat, kesimpulan sesuai grafik V terhadap I', galat: 'Amperemeter dipasang paralel dengan resistor\nSaklar tidak ditutup sebelum membaca alat ukur\nPolaritas alat ukur terbalik\nSatuan tidak dicatat di tabel', apd: 'Tidak ada APD khusus; ditampilkan pengingat tidak menyentuh kabel terbuka', bahaya: 'Amperemeter dipasang paralel sehingga arus berlebih\nKabel terbuka pada rangkaian bertegangan' } },
+teknologi: { c: { nama: 'Lab Maya Kabel UTP', mapel: 'Teknologi Jaringan Dasar', program: 'Teknik Komputer dan Jaringan', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Pembuatan kabel UTP straight-through dan pengujian dengan LAN tester',
+  tujuan: 'Menyebutkan fungsi alat crimping, LAN tester, konektor RJ45, dan kabel UTP\nMenyusun urutan warna kabel sesuai standar yang ditetapkan guru\nMenguji kabel dan menafsirkan hasil LAN tester', alat: 'Kabel UTP\nKonektor RJ45\nTang crimping\nLAN tester\nPengupas kabel', jenis: 'Perakitan', interaksi: ['Drag-and-Drop', 'Klik'] },
+  b: { variabel: 'Urutan delapan kabel pada konektor (drag-and-drop); panjang kupasan; jenis kabel straight-through atau crossover', model: 'Urutan warna mengikuti standar T568B (guru memverifikasi urutan dari referensi resmi). Straight-through memakai urutan yang sama di kedua ujung. LAN tester menyala berurutan 1 sampai 8 bila semua jalur benar.', berhasil: 'Urutan warna benar di kedua ujung, kupasan tidak terlalu panjang, kabel masuk penuh ke konektor, LAN tester menyala 1 sampai 8 berurutan', galat: 'Urutan warna salah pada salah satu ujung\nKupasan kabel terlalu panjang\nKabel tidak masuk sampai ujung konektor\nCrimping dilakukan sebelum urutan diperiksa', apd: 'Kacamata pelindung saat mengupas dan memotong kabel', bahaya: 'Ujung kabel terpotong lalu tajam\nPenggunaan tang crimping tanpa melihat posisi jari' } },
+teknik: { c: { nama: 'Lab Maya Multimeter', mapel: 'Dasar-dasar Teknik Kendaraan Ringan', program: 'Teknik Kendaraan Ringan Otomotif', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Pengukuran tegangan dan hambatan pada rangkaian kelistrikan dasar dengan multimeter digital',
+  tujuan: 'Memilih fungsi dan rentang multimeter yang sesuai besaran yang diukur\nMemasang probe dengan benar untuk mengukur tegangan dan hambatan\nMembaca hasil ukur dan menyimpulkan kondisi komponen', alat: 'Multimeter digital\nBaterai 12 V\nLampu\nResistor\nKabel penghubung\nSakelar', jenis: 'Pengukuran', interaksi: ['Klik', 'Pengaturan Parameter'] },
+  b: { variabel: 'Posisi saklar fungsi multimeter (V DC, V AC, ohm); rentang ukur; pemasangan probe; kondisi komponen baik atau rusak', model: 'Tegangan diukur paralel dengan komponen saat rangkaian hidup. Hambatan diukur saat komponen terlepas dari sumber tegangan. Nilai tampilan dihitung dari nilai komponen dan rangkaian yang ditetapkan skenario.', berhasil: 'Fungsi dan rentang tepat, probe terpasang benar, rangkaian aman saat mengukur hambatan, hasil dibaca dengan satuan benar, kondisi komponen disimpulkan benar', galat: 'Mengukur hambatan pada rangkaian yang masih bertegangan\nSaklar fungsi pada V AC saat mengukur baterai\nProbe terbalik atau terpasang seri saat mengukur tegangan\nSatuan salah baca', apd: 'Wearpack, kacamata pelindung, sepatu keselamatan', bahaya: 'Mengukur hambatan pada rangkaian bertegangan\nKorsleting akibat probe menyentuh dua terminal sekaligus' } },
+kesehatan: { c: { nama: 'Lab Maya Cuci Tangan', mapel: 'Dasar-dasar Keperawatan', program: 'Asisten Keperawatan', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Cuci tangan enam langkah dengan air mengalir dan sabun',
+  tujuan: 'Menyebutkan saat-saat yang mengharuskan cuci tangan\nMemperagakan enam langkah cuci tangan dengan urutan yang benar\nMenjelaskan alasan setiap langkah dalam mencegah infeksi', alat: 'Wastafel dengan air mengalir\nSabun cair\nTisu atau handuk sekali pakai\nTempat sampah', jenis: 'Prosedur Kerja', interaksi: ['Klik', 'Penyusunan Objek'] },
+  b: { variabel: 'Urutan gerakan enam langkah; durasi setiap langkah; pilihan keran dan sabun; pilihan alat pengering', model: 'Urutan dan durasi mengikuti pedoman cuci tangan yang dilampirkan guru (guru memverifikasi dari pedoman resmi). Area tangan yang belum terkena sabun ditandai pada visual tangan.', berhasil: 'Semua langkah berurutan, setiap area tangan terkena sabun, durasi cukup, tangan dikeringkan dengan benar, keran tidak disentuh langsung setelah selesai', galat: 'Langkah terlewat atau tertukar\nDurasi terlalu singkat\nKeran disentuh dengan tangan bersih setelah selesai\nTangan dikeringkan dengan kain yang dipakai bersama', apd: 'Pakaian praktik bersih, kuku pendek, perhiasan tangan dilepas', bahaya: 'Kontaminasi ulang setelah tangan bersih\nLangkah penting terlewat' } },
+bisnis: { c: { nama: 'Lab Maya Jurnal Umum', mapel: 'Akuntansi Dasar', program: 'Akuntansi dan Keuangan Lembaga', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Mencatat transaksi usaha jasa ke dalam jurnal umum dan memindahkannya ke buku besar',
+  tujuan: 'Menganalisis bukti transaksi menjadi akun yang terpengaruh\nMencatat transaksi ke jurnal umum dengan sisi debit dan kredit yang benar\nMemposting jurnal ke buku besar dan memeriksa keseimbangannya', alat: 'Bukti transaksi (kuitansi, faktur)\nJurnal umum\nBuku besar\nDaftar akun', jenis: 'Pemecahan Masalah', interaksi: ['Drag-and-Drop', 'Input Angka'] },
+  b: { variabel: 'Pilihan akun untuk setiap transaksi; sisi debit atau kredit; nominal; tanggal transaksi', model: 'Persamaan akuntansi: Aset = Liabilitas + Ekuitas. Setiap transaksi dicatat dengan total debit sama dengan total kredit. Saldo buku besar dihitung dari jumlah debit dan kredit tiap akun.', berhasil: 'Semua transaksi tercatat, debit sama dengan kredit pada setiap jurnal, posting ke buku besar sesuai akun, saldo akhir sesuai kunci skenario', galat: 'Debit dan kredit tidak seimbang\nAkun salah dipilih\nNominal salah ketik\nPosting ke akun yang berbeda dari jurnal', apd: '', bahaya: '' } },
+pariwisata: { c: { nama: 'Lab Maya Front Office', mapel: 'Dasar-dasar Perhotelan', program: 'Perhotelan dan Layanan Pariwisata', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Melayani tamu check-in di meja resepsionis hotel',
+  tujuan: 'Menyambut tamu dengan sapaan dan sikap yang sesuai\nMemeriksa reservasi dan identitas tamu dengan teliti\nMenyelesaikan proses check-in hingga penyerahan kunci kamar', alat: 'Sistem reservasi\nFormulir registrasi tamu\nKartu kunci kamar\nDaftar tarif kamar', jenis: 'Praktik Layanan', interaksi: ['Klik', 'Penyusunan Objek'] },
+  b: { variabel: 'Pilihan kalimat sapaan dan jawaban; tipe kamar yang ditawarkan; jenis permintaan khusus tamu; tamu dengan reservasi atau tanpa reservasi', model: 'Kepuasan tamu dihitung dari kriteria tertulis: sapaan, ketepatan data reservasi, waktu layanan, dan penanganan permintaan khusus. Setiap kriteria memiliki nilai tetap yang ditampilkan di laporan.', berhasil: 'Tamu disapa, reservasi diperiksa, formulir lengkap, kamar sesuai pesanan, kunci diserahkan, tamu diberi informasi fasilitas dan ucapan penutup', galat: 'Tidak memeriksa identitas tamu\nKamar yang diberikan tidak sesuai reservasi\nTidak menawarkan alternatif saat kamar penuh\nLupa menjelaskan jam sarapan dan check-out', apd: 'Seragam resepsionis dan penampilan rapi', bahaya: 'Data tamu salah dicatat' } },
+seni: { c: { nama: 'Lab Maya Warna Cahaya', mapel: 'Seni Rupa', program: '', jenjang: 'SMA', kelas: 'Fase F / Kelas XI', kurikulum: 'Kurikulum Merdeka', topik: 'Pencampuran warna cahaya (RGB) dan warna pigmen (CMY)',
+  tujuan: 'Membedakan pencampuran warna aditif dan subtraktif\nMemprediksi hasil campuran warna dari komposisi yang diberikan\nMenerapkan campuran warna pada komposisi poster sederhana', alat: 'Tiga sumber cahaya merah, hijau, dan biru\nTiga pigmen sian, magenta, dan kuning\nLayar putih\nKertas putih', jenis: 'Perancangan', interaksi: ['Slider', 'Pengaturan Parameter'] },
+  b: { variabel: 'Intensitas R, G, B dari 0 sampai 255; takaran pigmen C, M, Y dari 0 sampai 100 persen; warna latar putih atau hitam', model: 'Campuran aditif menjumlahkan cahaya (R + G = kuning, R + G + B = putih). Campuran subtraktif menyerap cahaya sehingga makin banyak pigmen makin gelap. Rumus tampilan warna ditulis di kode secara eksplisit.', berhasil: 'Prediksi warna dicatat sebelum mencoba, campuran sesuai target dengan toleransi yang ditetapkan, jawaban analisis membedakan aditif dan subtraktif', galat: 'Menyamakan pencampuran cahaya dengan pencampuran cat\nMengira merah dan hijau cahaya menghasilkan cokelat\nTidak mencatat prediksi sebelum percobaan', apd: '', bahaya: '' } },
+lainnya: { c: { nama: 'Lab Maya Penyemaian Benih', mapel: 'Dasar-dasar Agribisnis Tanaman', program: 'Agribisnis Tanaman', jenjang: 'SMK', kelas: 'Fase E / Kelas X', kurikulum: 'Kurikulum Merdeka', topik: 'Penyemaian benih sayuran pada tray semai',
+  tujuan: 'Menyiapkan media semai dan tray secara berurutan\nMenanam benih dengan kedalaman dan jarak yang sesuai\nMerawat semaian dan mengamati perkecambahan', alat: 'Tray semai\nMedia tanam\nBenih sayuran\nPenyiram semprot\nLabel', jenis: 'Prosedur Kerja', interaksi: ['Klik', 'Drag-and-Drop'] },
+  b: { variabel: 'Jumlah benih per lubang; kedalaman tanam; frekuensi penyiraman; peletakan tray di tempat terang atau teduh', model: 'Aturan perkecambahan ditulis jelas di kode berdasarkan petunjuk benih yang guru lampirkan: media terlalu basah atau terlalu kering menurunkan daya kecambah, kedalaman tanam di luar anjuran menunda tumbuh.', berhasil: 'Media siap, kedalaman dan jarak sesuai anjuran, label dipasang, penyiraman cukup, persentase benih berkecambah dicatat', galat: 'Media terlalu padat\nBenih ditanam terlalu dalam\nPenyiraman berlebihan\nTray tanpa label', apd: 'Sarung tangan dan topi saat bekerja di area terbuka', bahaya: 'Tangan kotor menyentuh wajah saat menyiapkan media' } },
+};
+
+/* ===== PENYUSUN PROMPT ===== */
+function bidangVals(bid, store) {
+  const P = BIDANG[bid], out = {};
+  FIELDS_B.forEach(f => {
+    let v = store && store[f.id] !== undefined ? store[f.id] : undefined;
+    if (v === undefined) {
+      if (f.id === 'apd') v = P.apd;
+      else if (f.id === 'bahaya') v = P.bahaya;
+      else if (/^w[1-5]$/.test(f.id)) v = String(P.w[Number(f.id[1]) - 1]);
+      else v = f.def !== undefined ? f.def : '';
+    }
+    out[f.id] = v;
+  });
+  return out;
+}
+function mkV(c) {
+  const byId = {}; COMMON.forEach(f => byId[f.id] = f);
+  return (k) => {
+    const f = byId[k], v = c[k];
+    if (Array.isArray(v)) return v.length ? v.join(', ') : '[' + f.ph + ']';
+    if (v !== undefined && String(v).trim()) return String(v).trim();
+    return f.optional ? f.optional : '[' + f.ph + ']';
+  };
+}
+const lines = s => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
+const bullets = (s, ph) => { const a = lines(s); return a.length ? LIST(a) : '* [' + ph + ']'; };
+const isCanvas = p => /Artifacts|Canvas|AI Studio/.test(p || '');
+
+function weights(g) {
+  const w = [1, 2, 3, 4, 5].map(i => Math.max(0, Math.round(Number(g['w' + i]) || 0)));
+  return { w, sum: w.reduce((a, b) => a + b, 0) };
+}
+
+function buildA(c, bid, g) {
+  const P = BIDANG[bid], V = mkV(c), secs = [];
+  const { w, sum } = weights(g);
+  const platform = V('platform');
+  const canvas = isCanvas(c.platform);
+  const inter = V('interaksi');
+  const fitur = (c.fitur && c.fitur.length) ? c.fitur.join(', ') : 'tidak ada fitur tambahan';
+  const tujuan = lines(c.tujuan), alat = lines(c.alat);
+  const hasBahaya = lines(g.bahaya).length > 0;
+  const nm = V('nama');
+
+  secs.push('# MASTER PROMPT LAB MAYA: ' + nm.toUpperCase());
+
+  secs.push(L('## A. PERAN AI', '',
+    'Anda adalah ahli desain pembelajaran, pengembang simulasi laboratorium virtual, programmer aplikasi web interaktif, dan perancang asesmen digital untuk bidang ' + P.name + '.', '',
+    'Tugas Anda adalah membangun Lab Maya "' + nm + '" yang interaktif, edukatif, realistis, dan sesuai dengan mata pelajaran ' + V('mapel') + ' serta program keahlian: ' + V('program') + '.', '',
+    'Hasilnya harus berupa aplikasi yang benar-benar dapat dijalankan, bukan deskripsi konsep. Setiap interaksi harus mengubah keadaan simulasi, dinilai oleh logika yang jelas, dan menghasilkan umpan balik yang mendidik.'));
+
+  secs.push(L('## B. KONFIGURASI PRAKTIKUM', '',
+    'Gunakan konfigurasi berikut sebagai sumber utama.', '',
+    LIST([
+      'Nama aplikasi: ' + nm,
+      'Bidang: ' + P.name,
+      'Mata pelajaran: ' + V('mapel'),
+      'Program keahlian: ' + V('program'),
+      'Jenjang: ' + V('jenjang'),
+      'Fase dan kelas: ' + V('kelas'),
+      'Kurikulum: ' + V('kurikulum'),
+      'Topik praktikum: ' + V('topik'),
+      'Jenis simulasi: ' + V('jenis'),
+      'Interaksi utama: ' + inter,
+      'Tingkat kesulitan: ' + V('kesulitan'),
+      'Perkiraan durasi: ' + (g.durasi || '[DURASI]'),
+      'Platform pengembangan: ' + platform,
+      'Fitur tambahan: ' + fitur,
+    ]), '',
+    'Tujuan pembelajaran:', '', bullets(c.tujuan, 'TUJUAN_PEMBELAJARAN'), '',
+    'Alat dan bahan:', '', bullets(c.alat, 'ALAT_DAN_BAHAN'), '',
+    'Aturan penting:', '',
+    LIST([
+      'Seluruh teks, soal, rubrik, dan umpan balik harus sesuai dengan konfigurasi di atas. Jangan memakai materi dari topik lain.',
+      'Jika ada informasi yang belum diberikan, pilih asumsi yang wajar sesuai bidang ' + P.name + ' dan tulis asumsi itu dalam daftar di akhir jawaban.',
+      'Jangan mengarang standar teknis, nilai batas, rumus, atau prosedur keselamatan yang belum diberikan atau belum dapat diverifikasi. Bila perlu nilai yang tidak tersedia, tandai di aplikasi dan di daftar asumsi sebagai "perlu diverifikasi guru".',
+    ])));
+
+  secs.push(L('## C. IDENTITAS DAN TUJUAN PRAKTIKUM', '',
+    'Tampilkan bagian berikut di Beranda dan Tab Teori, disesuaikan dengan jenjang ' + V('jenjang') + ' dan ' + V('kelas') + ':', '',
+    NUM([
+      'Nama Lab Maya: ' + nm + '.',
+      'Peran dan kompetensi pengguna: tentukan peran yang wajar bagi peserta didik pada topik ini (mis. asisten laboratorium, teknisi, atau petugas layanan).',
+      'Topik praktikum: ' + V('topik') + '.',
+      'Latar belakang singkat: dua sampai tiga kalimat tentang mengapa topik ini penting di dunia nyata.',
+      'Tujuan pembelajaran yang terukur: ' + (tujuan.length ? 'gunakan tujuan yang diberikan di atas, dan ubah ke rumusan yang dapat diamati bila perlu.' : 'susun dari topik, dan nyatakan sebagai asumsi.'),
+      'Kompetensi yang dilatih: turunkan dari tujuan dan rubrik penilaian.',
+      'Prasyarat pengetahuan: daftar konsep yang perlu dikuasai sebelum praktikum.',
+      'Indikator keberhasilan praktikum: sambungkan dengan kondisi berhasil di bagian F.',
+    ])));
+
+  secs.push(L('## D. FORMAT DAN DESAIN ANTARMUKA', '',
+    'Buat antarmuka modern dan profesional yang terasa seperti ' + P.env + '.', '',
+    LIST([
+      'Area simulasi mendapat ruang terbesar di tab Simulasi.',
+      'Target desktop 1920 × 1080 piksel. Layout harus responsif untuk laptop, tablet, dan ponsel. Pada layar kecil gunakan tata letak bertumpuk dan scrolling yang wajar, jangan memaksa semua elemen ke satu layar.',
+      'Navigasi jelas dengan delapan menu (lihat bagian E). Menu aktif selalu terlihat.',
+      'Panel alat, bahan, instruksi, pengamatan, dan hasil dapat dibuka tanpa meninggalkan area simulasi.',
+      'Gambar semua objek dengan SVG atau Canvas bawaan yang sesuai dengan ' + V('topik') + '. Jangan memakai berkas gambar luar.',
+      'Animasi hanya dipakai bila membantu memahami konsep, dan menghormati prefers-reduced-motion.',
+      'Indikator proses, status, dan hasil simulasi harus terlihat jelas dengan warna dan teks, bukan warna saja.',
+      'Sediakan pengaturan audio (bila fitur audio dipilih) dan aksesibilitas: kontras cukup, fokus keyboard terlihat, target sentuh minimal 44 px.',
+    ])));
+
+  secs.push(L('## E. STRUKTUR MENU WAJIB', '',
+    'Buat delapan menu berikut. Isi setiap menu harus spesifik pada topik ' + V('topik') + '.', '',
+    '### A. Beranda', LIST(['Judul dan identitas ' + nm + '.', 'Deskripsi singkat dan tujuan pembelajaran.', 'Tombol Mulai Praktikum.', 'Petunjuk penggunaan singkat.']), '',
+    '### B. Tab Teori', LIST(['Berisi: ' + P.teori + '.', 'Fungsi setiap alat dan bahan yang terdaftar di bagian B.', 'Sumber rumus atau aturan hanya dari bagian F. Bila tidak ada, tulis penjelasan konseptual saja.']), '',
+    '### C. Tab Prosedur', LIST(['Berisi: ' + P.prosedur + '.', 'Prosedur keselamatan yang sesuai (lihat bagian H).', 'Daftar periksa sebelum praktik yang dapat dicentang oleh pengguna dan menjadi prasyarat memulai simulasi.']), '',
+    '### D. Tab Simulasi', LIST(['Area kerja interaktif, objek yang dapat dipilih, dan variabel yang dapat diubah.', 'Visualisasi proses, panel hasil pengamatan, dan umpan balik langsung.', 'Tombol Mulai, Jeda (bila relevan), Reset, dan Evaluasi.']), '',
+    '### E. Tab LKPD Digital', LIST(['Identitas peserta didik, tujuan praktikum, tabel pengamatan, kolom prediksi dan hasil, pertanyaan analisis, kesimpulan, dan refleksi.', 'Tabel pengamatan terisi otomatis dari data simulasi, tetapi siswa tetap dapat memeriksa dan melengkapinya.']), '',
+    '### F. Tab Evaluasi', LIST(['Soal pemahaman konsep: ' + (g.jumlahSoal || '[JUMLAH_SOAL]') + ' soal dengan kunci dan pembahasan.', 'Penilaian prosedur, penilaian hasil kerja, dan analisis kesalahan.', 'Skor otomatis dan pembahasan.']), '',
+    '### G. Tab Laporan', LIST(['Data pengamatan, langkah yang berhasil dan gagal, hasil perhitungan bila relevan, skor, umpan balik, dan kesimpulan.', 'Tombol Salin Laporan sebagai teks' + (/Salin laporan/.test(fitur) ? '' : ' (tambahkan walau tidak dipilih, karena aman di semua platform)') + '. Tombol Cetak hanya dipasang bila platform mengizinkan; bila diblokir, tampilkan pesan yang menjelaskan hal itu.']), '',
+    '### H. Tab Pengembang', LIST(['Nama aplikasi: ' + nm + '.', 'Nama pengembang: ' + V('pengembang') + '.', 'Institusi: ' + V('institusi') + '.', 'Versi aplikasi: ' + V('versi') + '.', 'Tahun pengembangan: ' + V('tahun') + '.', 'Informasi hak cipta: ' + V('hakcipta') + '.'])));
+
+  secs.push(L('## F. DESAIN MESIN SIMULASI', '',
+    'Rancang simulasi untuk jenis ' + V('jenis') + ' dengan interaksi ' + inter + '. Tentukan dan implementasikan:', '',
+    NUM([
+      'Area kerja dan seluruh objek yang ditampilkan, berdasarkan alat dan bahan di bagian B.',
+      'Fungsi setiap alat, bahan, atau komponen, dan batas penggunaannya.',
+      'Kondisi awal simulasi yang konsisten setiap kali Reset ditekan.',
+      'Langkah yang harus dilakukan pengguna, mengikuti prosedur di Tab Prosedur.',
+      'Jenis interaksi yang diperlukan, semuanya berfungsi nyata (' + inter + ').',
+      'Variabel yang dapat diubah pengguna:\n' + bullets(g.variabel, 'VARIABEL_SIMULASI'),
+      'Hubungan sebab-akibat dan model yang dipakai:\n' + bullets(g.model, 'RUMUS_ATURAN') + '\n   Implementasikan model ini sebagai fungsi murni yang diuji. Jangan memakai hasil acak sebagai pengganti hubungan sebab-akibat. Acak hanya boleh dipakai untuk variasi skenario yang tetap valid.',
+      'Hasil yang diharapkan pada kondisi benar, ditampilkan pada panel pengamatan dengan satuan yang tepat.',
+      'Kondisi berhasil:\n' + bullets(g.berhasil, 'KONDISI_BERHASIL') + '\n   Kondisi gagal: langkah wajib terlewat, parameter di luar batas, atau tindakan tidak aman.',
+      'Cara mengulang simulasi dengan kondisi baru: tombol Reset dan variasi skenario yang valid, tanpa menghitung skor lama lagi.',
+    ]), '',
+    'Gunakan interaksi yang benar-benar berfungsi, bukan tombol dekoratif.'));
+
+  const err = lines(g.galat);
+  secs.push(L('## G. LOGIKA PROGRAM DAN UMPAN BALIK', '',
+    'Tuliskan dan implementasikan aturan simulasi dengan format:', '',
+    'JIKA [kondisi atau tindakan pengguna]',
+    'MAKA [perubahan keadaan simulasi]',
+    'TAMPILKAN [animasi, indikator, data, atau pesan]',
+    'NILAIKAN [kriteria yang terpenuhi]', '',
+    'Buat minimal dua aturan untuk setiap skenario berikut, memakai nama alat, variabel, dan nilai dari topik ' + V('topik') + ':', '',
+    NUM(['Tindakan yang benar.', 'Tindakan yang salah.', 'Parameter yang tidak sesuai.', 'Prosedur yang dilewati.', 'Hasil yang sebagian benar.', 'Penyelesaian praktikum yang berhasil.']), '',
+    'Kesalahan yang wajib dikenali:', '', bullets(g.galat, 'KESALAHAN_UMUM'), '',
+    'Setiap kesalahan harus menghasilkan umpan balik dengan tiga bagian: penyebab, dampak, dan cara memperbaiki. Gunakan bahasa yang positif dan tidak mempermalukan. Setiap aturan hanya dinilai satu kali, termasuk bila pengguna mengulang tindakan yang sama.'
+    + (err.length ? '' : '\nBila daftar kesalahan di atas belum terisi, susun kesalahan yang wajar dan tulis sebagai asumsi.')));
+
+  const apd = (g.apd || '').trim();
+  secs.push(L('## H. PROSEDUR KESELAMATAN', '',
+    hasBahaya || apd
+      ? 'Sesuaikan aspek keselamatan dengan kegiatan yang disimulasikan:'
+      : 'Topik ini tidak memuat bahaya fisik utama. Tetap sediakan pengingat kerja yang aman dan tertib, dan jangan menambahkan peringatan yang tidak relevan.', '',
+    LIST([
+      'Tampilkan APD dan perlengkapan: ' + (apd || (hasBahaya ? '[APD]' : 'tidak ada APD khusus')) + '.',
+      'Periksa kondisi awal sebelum praktik lewat daftar periksa di Tab Prosedur.',
+      'Simulasikan bahaya yang relevan:\n' + (hasBahaya ? bullets(g.bahaya, 'BAHAYA') : '  tidak ada bahaya yang disimulasikan'),
+      'Berikan peringatan saat pengguna melakukan tindakan berisiko, dan jelaskan alasannya.',
+      'Hentikan simulasi bila perlu untuk mencegah tindakan tidak aman, lalu tampilkan prosedur yang benar sebelum bisa melanjutkan.',
+      'Untuk kegiatan berisiko tinggi, gunakan skenario virtual yang terkendali dan prosedur dari referensi tepercaya yang diberikan guru. Jangan mengarang prosedur keselamatan.',
+    ])));
+
+  const rows = [];
+  w.forEach((x, i) => { if (x > 0) rows.push(x + ' poin: ' + WLABEL[i] + (P.wd[i] ? ' (' + P.wd[i] + ')' : '')); });
+  secs.push(L('## I. PENILAIAN OTOMATIS', '',
+    'Gunakan rubrik dengan total 100 poin:', '',
+    sum === 100 ? LIST(rows) : '* [BOBOT_RUBRIK_HARUS_100] Total bobot yang diisi saat ini ' + sum + ' poin. Perbaiki di Bengkel Prompt sebelum menyalin.\n' + LIST(rows), '',
+    'Aspek dengan bobot 0 tidak dinilai dan tidak boleh muncul di rubrik. Pastikan total bobot tepat 100 poin dan jumlah poin tiap aspek dihitung dari kriteria yang dapat diamati di simulasi.', '',
+    'Sistem harus:', '',
+    LIST(['Menghitung skor secara otomatis.', 'Merekam kesalahan dan langkah yang berhasil.', 'Memberikan pembahasan untuk setiap kesalahan.', 'Menampilkan kompetensi yang sudah dikuasai berdasarkan data tercatat, bukan skor total saja.', 'Memberikan rekomendasi latihan berikutnya.'])));
+
+  secs.push(L('## J. LKPD DAN LAPORAN DIGITAL', '',
+    'Sediakan formulir digital untuk data pengamatan, hasil perhitungan, jawaban analisis, dan kesimpulan.', '',
+    'Laporan akhir berisi:', '',
+    LIST(['Identitas peserta didik.', 'Waktu praktikum (dicatat otomatis).', 'Tujuan.', 'Prosedur yang dilakukan.', 'Data pengamatan.', 'Hasil analisis.', 'Kesalahan yang ditemukan.', 'Skor akhir.', 'Refleksi dan kesimpulan.']), '',
+    LIST([
+      'Sediakan tombol Salin Laporan sebagai teks yang berfungsi di semua platform.',
+      canvas ? 'Platform ' + platform + ' sering memblokir cetak dan unduhan. Jangan menjanjikan ekspor PDF. Bila window.print() tidak berjalan, tampilkan pesan dan tawarkan salin teks.' : 'Tambahkan opsi cetak atau ekspor PDF hanya bila benar-benar dapat diimplementasikan di platform ini.',
+      'Jangan mengklaim data tersimpan permanen atau terkirim ke guru bila server belum dibuat. Tulis dengan jelas bahwa data hanya ada di perangkat ini.',
+    ])));
+
+  secs.push(L('## K. PERSYARATAN TEKNIS', '',
+    'Bangun aplikasi dengan ' + platform + '.', '',
+    NUM([
+      canvas || /HTML5/.test(platform) ? 'Gabungkan seluruh kode dalam satu file HTML yang dapat dijalankan langsung tanpa langkah instalasi.' : 'Pisahkan kode secara terstruktur dan jelaskan cara menjalankannya.',
+      'Implementasikan semua tombol, menu, validasi, perhitungan, dan interaksi. Jangan menampilkan fitur yang belum berfungsi.',
+      'Jangan bergantung pada server, API eksternal, atau database.',
+      'Gunakan localStorage hanya untuk progres lokal, dengan try/catch di setiap akses. Aplikasi tetap berjalan bila penyimpanan tidak tersedia.',
+      'Pastikan Reset mengembalikan simulasi ke kondisi awal dan mencegah nilai ganda dari satu tindakan.',
+      'Jangan memakai alert(), confirm(), atau prompt() bawaan browser. Buat konfirmasi di dalam halaman.',
+      'Pisahkan data (konfigurasi, soal, rubrik) dari logika dan tampilan. Simpan status dalam satu objek.',
+      'Tampilkan pesan kesalahan yang mudah dipahami pengguna.',
+      'Tampilan responsif dan aksesibel. Hindari ketergantungan eksternal yang tidak diperlukan.',
+    ])));
+
+  secs.push(L('## L. PENGUJIAN APLIKASI', '',
+    'Sebelum menyelesaikan aplikasi, uji dan laporkan hasilnya:', '',
+    NUM(['Seluruh menu dan tombol.', 'Semua jalur interaksi.', 'Kondisi benar dan salah.', 'Perhitungan dan skor, termasuk total rubrik 100 poin.', 'Reset simulasi dan pengulangan tanpa kerusakan status.', 'Penyimpanan dan penyalinan laporan.', 'Tampilan di desktop, tablet, dan ponsel.', 'Akurasi materi dan keselamatan.', ...P.tests]), '',
+    'Perbaiki kesalahan yang ditemukan sebelum menyajikan hasil akhir.'));
+
+  secs.push(L('## M. OUTPUT AKHIR', '',
+    'Hasilkan aplikasi lengkap yang dapat dijalankan dan diuji. Sertakan:', '',
+    NUM(['Kode aplikasi lengkap.', 'Petunjuk menjalankan.', 'Ringkasan fitur.', 'Daftar pengujian dan hasilnya.', 'Daftar asumsi untuk kolom yang belum diisi dan nilai yang perlu diverifikasi guru.']), '',
+    'Jangan berhenti pada perencanaan. Bila ada keterbatasan platform, jelaskan secara spesifik dan jangan mengklaim fitur telah berfungsi bila belum diimplementasikan.'));
+
+  return secs.join('\n\n');
+}
+
+function buildB(c, bid, g) {
+  const P = BIDANG[bid], V = mkV(c);
+  const { w, sum } = weights(g);
+  const fitur = (c.fitur && c.fitur.length) ? c.fitur.join(', ') : 'tidak ada fitur tambahan';
+  const rows = [];
+  w.forEach((x, i) => { if (x > 0) rows.push(WLABEL[i] + ' ' + x + ' poin'); });
+  return L('# BAGIAN B: RINGKASAN SPESIFIKASI', '',
+    '## Nama aplikasi', V('nama'), '',
+    '## Sasaran pengguna', 'Peserta didik ' + V('jenjang') + ', ' + V('kelas') + ', mata pelajaran ' + V('mapel') + ', program keahlian: ' + V('program') + '. Bidang: ' + P.name + '.', '',
+    '## Tujuan pembelajaran', bullets(c.tujuan, 'TUJUAN_PEMBELAJARAN'), '',
+    '## Fitur utama', LIST(['Delapan menu: Beranda, Teori, Prosedur, Simulasi, LKPD Digital, Evaluasi, Laporan, Pengembang.', 'Simulasi ' + V('jenis') + ' bertopik ' + V('topik') + '.', 'Skor otomatis dengan rubrik 100 poin dan rekomendasi latihan.', 'Soal evaluasi: ' + (g.jumlahSoal || '[JUMLAH_SOAL]') + ' soal.', 'Fitur tambahan: ' + fitur + '.']), '',
+    '## Interaksi utama', V('interaksi') + '. Variabel yang dapat diubah:', bullets(g.variabel, 'VARIABEL_SIMULASI'), '',
+    '## Logika keberhasilan dan kegagalan', '* Berhasil bila:', bullets(g.berhasil, 'KONDISI_BERHASIL').replace(/^/gm, '  '), '* Gagal bila langkah wajib terlewat, parameter di luar batas, atau tindakan tidak aman.', '* Kesalahan yang dilatih:', bullets(g.galat, 'KESALAHAN_UMUM').replace(/^/gm, '  '), '',
+    '## Sistem penilaian', sum === 100 ? LIST(rows) + '\n* Total: 100 poin.' : '* [BOBOT_RUBRIK_HARUS_100] Total saat ini ' + sum + ' poin.', '',
+    '## Persyaratan teknis', LIST(['Platform: ' + V('platform') + '.', 'Satu file mandiri bila memungkinkan, tanpa server atau API eksternal.', 'Responsif dan aksesibel; target desktop 1920 × 1080 piksel.', 'localStorage opsional untuk progres, dengan penanganan galat.', 'Tanpa alert, confirm, atau prompt bawaan browser.']));
+}
+
+
+/* ===== ANTARMUKA ===== */
+function mount(root) {
+  const $ = (s, r) => (r || root).querySelector(s);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const KEY = 'bengkel-prompt-lab-maya-v1';
+
+  const commonDefaults = () => { const o = {}; COMMON.forEach(f => { if (f.def !== undefined) o[f.id] = Array.isArray(f.def) ? f.def.slice() : f.def; }); return o; };
+  let S = { bidang: 'sains', common: commonDefaults(), per: {}, tab: 'a' };
+  try { const raw = localStorage.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && BIDANG[p.bidang]) S = Object.assign(S, p, { common: Object.assign(commonDefaults(), p.common || {}) }); } } catch (e) {}
+  let saveT = 0;
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  const pStore = b => (S.per[b] = S.per[b] || {});
+  const pVals = b => bidangVals(b, pStore(b));
+
+  function fieldHTML(f, scope, value, hintOverride) {
+    const id = 'f-' + scope + '-' + f.id;
+    const data = 'data-scope="' + scope + '" data-id="' + f.id + '"';
+    const hint = hintOverride !== undefined ? hintOverride : f.hint;
+    let ctrl = '';
+    if (f.type === 'text') ctrl = '<input id="' + id + '" type="text" ' + data + ' value="' + esc(value || '') + '" placeholder="' + esc(f.placeholder || '') + '" autocomplete="off">';
+    else if (f.type === 'number') ctrl = '<input id="' + id + '" type="number" inputmode="numeric" ' + data + ' value="' + esc(value || '') + '" min="' + (f.min || 0) + '" max="' + (f.max || 999) + '">';
+    else if (f.type === 'textarea') ctrl = '<textarea id="' + id + '" ' + data + ' rows="3" placeholder="' + esc(f.placeholder || '') + '">' + esc(value || '') + '</textarea>';
+    else if (f.type === 'select') ctrl = '<select id="' + id + '" ' + data + '>' + f.opts.map(o => '<option' + (o === value ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+    else if (f.type === 'checks') {
+      const cur = Array.isArray(value) ? value : [];
+      return '<fieldset class="field' + (f.wide ? ' wide' : '') + '"><legend>' + esc(f.label) + '</legend><div class="chips">' +
+        f.opts.map(o => '<label class="chip"><input type="checkbox" ' + data + ' data-opt="' + esc(o) + '"' + (cur.indexOf(o) > -1 ? ' checked' : '') + '><span>' + esc(o) + '</span></label>').join('') +
+        '</div></fieldset>';
+    }
+    return '<div class="field' + (f.wide ? ' wide' : '') + '"><label for="' + id + '">' + esc(f.label) + '</label>' + ctrl + (hint ? '<span class="hint">' + esc(hint) + '</span>' : '') + '</div>';
+  }
+
+  function renderCards() {
+    $('#cards').innerHTML = Object.keys(BIDANG).map(k => {
+      const B = BIDANG[k];
+      return '<button type="button" class="gcard" role="radio" aria-checked="' + (k === S.bidang) + '" data-bidang="' + k + '" style="--g:' + B.color + '"><span class="gico"><svg viewBox="0 0 48 48" aria-hidden="true">' + B.icon + '</svg></span><span class="gname">' + esc(B.name) + '</span><span class="gshort">' + esc(B.short) + '</span></button>';
+    }).join('');
+    const B = BIDANG[S.bidang];
+    const n = $('#gnote'); n.textContent = B.note; n.style.setProperty('--g', B.color);
+    $('#atur-name').textContent = '· ' + B.name;
+  }
+  function groupedHTML(fields, scope, vals, hintFn) {
+    let html = '', last = null;
+    fields.forEach(f => {
+      if (f.group !== last) { html += '<h3 class="sub-h">' + esc(f.group) + '</h3>'; last = f.group; }
+      html += fieldHTML(f, scope, vals[f.id], hintFn ? hintFn(f) : undefined);
+      if (f.id === 'w5') html += '<div class="wsum" id="wsum" role="status"></div>';
+    });
+    return html;
+  }
+  function renderCommon() { $('#f-common').innerHTML = groupedHTML(COMMON, 'common', S.common); }
+  function renderBidang() {
+    const B = BIDANG[S.bidang];
+    $('#f-bidang').innerHTML = groupedHTML(FIELDS_B, 'bidang', pVals(S.bidang), f => {
+      const m = /^w([1-5])$/.exec(f.id);
+      if (!m) return undefined;
+      const d = B.wd[Number(m[1]) - 1];
+      return d ? 'Menilai ' + d + '. Isi 0 bila tidak relevan.' : 'Tidak relevan di bidang ini. Biarkan 0 bila tidak dinilai.';
+    });
+  }
+
+  const hl = text => text.split('\n').map(l => {
+    let s = esc(l).replace(/\[([A-Z][A-Z0-9_]{2,})\]/g, '<mark>[$1]</mark>');
+    if (/^#{1,3} /.test(l)) s = '<span class="hd">' + s + '</span>';
+    return s;
+  }).join('\n');
+
+  let textA = '', textB = '';
+  function update() {
+    const g = pVals(S.bidang);
+    textA = buildA(S.common, S.bidang, g);
+    textB = buildB(S.common, S.bidang, g);
+    const text = S.tab === 'a' ? textA : textB;
+    $('#out').innerHTML = hl(text);
+    const miss = [...new Set((textA + '\n' + textB).match(/\[[A-Z][A-Z0-9_]{2,}\]/g) || [])];
+    const words = text.trim().split(/\s+/).length.toLocaleString('id-ID');
+    const m = '<b>' + words + '</b> kata · ' + (miss.length ? '<b>' + miss.length + '</b> kolom belum diisi' : 'semua kolom terisi');
+    $('#meta').innerHTML = m; $('#meta2').innerHTML = m;
+    const mi = $('#miss');
+    if (miss.length) { mi.hidden = false; mi.textContent = 'Belum diisi: ' + miss.map(x => x.slice(1, -1)).join(' · '); } else mi.hidden = true;
+    root.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
+    $('#out').setAttribute('aria-labelledby', 'tab-' + S.tab);
+    const ws = $('#wsum');
+    if (ws) {
+      const sum = weights(g).sum;
+      ws.className = 'wsum ' + (sum === 100 ? 'ok' : 'bad');
+      ws.textContent = sum === 100 ? 'Total bobot 100 poin. Rubrik siap dipakai.' : 'Total bobot ' + sum + ' poin. Ubah angka di atas sampai tepat 100.';
+    }
+    save();
+  }
+
+  function onField(e) {
+    const t = e.target, scope = t.dataset && t.dataset.scope; if (!scope) return;
+    const id = t.dataset.id;
+    const store = scope === 'common' ? S.common : pStore(S.bidang);
+    if (t.type === 'checkbox') {
+      const f = COMMON.find(x => x.id === id);
+      const cur = Array.isArray(store[id]) ? store[id].slice() : (f && Array.isArray(f.def) ? f.def.slice() : []);
+      const opt = t.dataset.opt, i = cur.indexOf(opt);
+      if (t.checked && i < 0) cur.push(opt);
+      if (!t.checked && i > -1) cur.splice(i, 1);
+      store[id] = cur;
+    } else store[id] = t.value;
+    update();
+  }
+  root.addEventListener('input', onField);
+  root.addEventListener('change', e => { if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') onField(e); });
+
+  function pick(k) { S.bidang = k; renderCards(); renderBidang(); update(); }
+  $('#cards').addEventListener('click', e => { const b = e.target.closest('.gcard'); if (b) pick(b.dataset.bidang); });
+  $('#cards').addEventListener('keydown', e => {
+    if (!/^Arrow/.test(e.key)) return;
+    const keys = Object.keys(BIDANG); let i = keys.indexOf(S.bidang);
+    i = (i + (/Right|Down/.test(e.key) ? 1 : keys.length - 1)) % keys.length;
+    pick(keys[i]);
+    const nb = $('.gcard[data-bidang="' + S.bidang + '"]'); if (nb) nb.focus(); e.preventDefault();
+  });
+
+  $('#btn-example').addEventListener('click', () => {
+    const ex = EXAMPLE[S.bidang];
+    S.common = Object.assign(commonDefaults(), ex.c);
+    S.per[S.bidang] = Object.assign({}, ex.b);
+    renderCommon(); renderBidang(); update();
+    toast('Contoh ' + BIDANG[S.bidang].name + ' dimasukkan. Ganti dengan data kelas Anda.');
+  });
+  $('#btn-clear').addEventListener('click', () => {
+    S.common = Object.assign(commonDefaults(), { nama: '', mapel: '', program: '', kelas: '', kurikulum: '', topik: '', tujuan: '', alat: '', pengembang: '', institusi: '' });
+    S.per[S.bidang] = { variabel: '', model: '', berhasil: '', galat: '' };
+    renderCommon(); renderBidang(); update();
+  });
+  $('#btn-reset').addEventListener('click', () => { S.per[S.bidang] = {}; renderBidang(); update(); toast('Aturan ' + BIDANG[S.bidang].name + ' dikembalikan ke bawaan.'); });
+  root.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { S.tab = t.dataset.tab; update(); }));
+
+  let toastT = 0;
+  function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2400); }
+  function selectOut() { const r = document.createRange(); r.selectNodeContents($('#out')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  function flash() { ['#btn-copy', '#btn-copy2'].forEach(id => { const b = $(id); b.classList.add('ok'); b.textContent = 'Tersalin'; setTimeout(() => { b.classList.remove('ok'); b.textContent = id === '#btn-copy' ? 'Salin bagian ini' : 'Salin bagian ini'; }, 1600); }); }
+  function copyText(text, label) {
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (ok) { flash(); toast(label + ' disalin'); } else { selectOut(); toast('Teks sudah dipilih. Tekan Ctrl+C atau pilih Salin di menu perangkat.'); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => { flash(); toast(label + ' disalin'); }, fallback);
+    else fallback();
+  }
+  const copyCur = () => copyText(S.tab === 'a' ? textA : textB, S.tab === 'a' ? 'Bagian A' : 'Bagian B');
+  $('#btn-copy').addEventListener('click', copyCur); $('#btn-copy2').addEventListener('click', copyCur);
+  $('#btn-both').addEventListener('click', () => copyText(textA + '\n\n' + textB, 'Bagian A dan B'));
+
+  renderCards(); renderCommon(); renderBidang(); update();
+}
+return { mount };
+})();
+
+/* ===== SHELL: loading, pilihan bengkel, pemasangan aplikasi ===== */
+(function () {
+  const $ = s => document.querySelector(s);
+  const APPS = {
+    game: { tpl: 'tpl-game', app: GameApp },
+    lab: { tpl: 'tpl-lab', app: LabApp },
+  };
+  const choose = $('#choose'), nav = $('#nav'), stage = $('#stage'), boot = $('#boot');
+
+  function show(view) {
+    const isApp = !!APPS[view];
+    choose.hidden = isApp; nav.hidden = !isApp;
+    stage.replaceChildren();
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-current', String(b.dataset.go === view)));
+    if (isApp) {
+      const root = document.createElement('div');
+      root.appendChild(document.getElementById(APPS[view].tpl).content.cloneNode(true));
+      stage.appendChild(root);
+      APPS[view].app.mount(root);
+    }
+    try { window.scrollTo(0, 0); } catch (e) {}
+    const h = isApp ? stage.querySelector('h1') : $('#h-choose');
+    if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-go]');
+    if (b && !boot.contains(b)) show(b.dataset.go);
+  });
+
+  /* Layar loading: sekilas pembuka, menunggu font siap, bisa dilewati */
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MIN = reduce ? 500 : 2600;
+  const MSGS = [[0, 'Menyiapkan papan permainan'], [34, 'Menyiapkan laboratorium virtual'], [68, 'Menyusun templat prompt'], [100, 'Siap dipakai']];
+  const fill = $('#boot-fill'), msg = $('#boot-msg'), bar = $('#boot-bar');
+  let fontsReady = false, done = false, timer = 0;
+  const t0 = Date.now();
+  Promise.race([document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 3500))])
+    .then(() => { fontsReady = true; }, () => { fontsReady = true; });
+
+  function paint(pct) {
+    fill.style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(pct));
+    let m = MSGS[0][1]; MSGS.forEach(x => { if (pct >= x[0]) m = x[1]; });
+    msg.textContent = m;
+  }
+  function finish() {
+    if (done) return; done = true; clearInterval(timer);
+    paint(100);
+    setTimeout(() => {
+      boot.classList.add('out');
+      setTimeout(() => {
+        boot.hidden = true;
+        const h = (location.hash || '').replace('#', '');
+        if (APPS[h]) show(h); else { const t = $('#h-choose'); if (t) { t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll: true }); } catch (e) {} } }
+      }, reduce ? 0 : 420);
+    }, reduce ? 0 : 260);
+  }
+  function tick() {
+    const p = Math.min(1, (Date.now() - t0) / MIN);
+    let pct = Math.round((1 - Math.pow(1 - p, 2.2)) * 100);
+    if (!fontsReady && pct > 92) pct = 92;
+    if (pct < 100) paint(pct);
+    if (p >= 1 && fontsReady) finish();
+  }
+  timer = setInterval(tick, 60);
+  $('#boot-skip').addEventListener('click', finish);
+})();
+
 </script>
 
 </body></html>
